@@ -70,16 +70,13 @@ public class ChamadoService {
                             "Disciplina inválida.", HttpStatus.UNPROCESSABLE_ENTITY));
         }
 
-        // 1) docente da disciplina; 2) responsável da categoria (sobe pela árvore); 3) triagem
+        // Responsável = docente da disciplina. Sem docente, o chamado fica ABERTO para triagem do admin.
         Usuario responsavel = null;
         String origem = null;
         if (disciplina != null && disciplina.getDocente() != null
                 && "ATIVO".equals(disciplina.getDocente().getStatus())) {
             responsavel = disciplina.getDocente();
             origem = "docente da disciplina " + disciplina.getNome();
-        } else {
-            responsavel = resolverResponsavelPadrao(categoria);
-            if (responsavel != null) origem = "responsável pela categoria " + categoria.getNome();
         }
 
         Chamado chamado = new Chamado();
@@ -310,14 +307,4 @@ public class ChamadoService {
                 c.getCriadoEm());
     }
 
-    /** Sobe pela árvore de categorias até achar um responsável padrão ativo. */
-    private Usuario resolverResponsavelPadrao(Categoria categoria) {
-        Categoria atual = categoria;
-        while (atual != null) {
-            Usuario r = atual.getResponsavelPadrao();
-            if (r != null && "ATIVO".equals(r.getStatus())) return r;
-            atual = atual.getCategoriaPai();
-        }
-        return null;
-    }
 }

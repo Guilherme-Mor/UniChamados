@@ -34,10 +34,6 @@ public class Categoria {
     @Column(name = "exige_disciplina", nullable = false)
     private Boolean exigeDisciplina = false;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "responsavel_padrao_id")
-    private Usuario responsavelPadrao;
-
     public Integer getId() { return id; }
     public String getNome() { return nome; }
     public void setNome(String nome) { this.nome = nome; }
@@ -51,8 +47,6 @@ public class Categoria {
     public void setAtivo(Boolean ativo) { this.ativo = ativo; }
     public Integer getOrdem() { return ordem; }
     public void setOrdem(Integer ordem) { this.ordem = ordem; }
-    public Usuario getResponsavelPadrao() { return responsavelPadrao; }
-    public void setResponsavelPadrao(Usuario responsavelPadrao) { this.responsavelPadrao = responsavelPadrao; }
     public Boolean getExigeDisciplina() { return exigeDisciplina; }
     public void setExigeDisciplina(Boolean exigeDisciplina) { this.exigeDisciplina = exigeDisciplina; }
 }

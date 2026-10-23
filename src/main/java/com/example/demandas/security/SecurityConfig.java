@@ -9,6 +9,9 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
+import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 
 @Configuration
 @EnableMethodSecurity
@@ -22,8 +25,11 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                // CSRF desligado só para o MVP local (front estático + testes no Postman)
-                .csrf(csrf -> csrf.disable())
+                // CSRF ativo: token em cookie legível pelo JS, devolvido no cabeçalho X-XSRF-TOKEN
+                .csrf(csrf -> csrf
+                        .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                        .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler()))
+                .addFilterAfter(new CsrfCookieFilter(), BasicAuthenticationFilter.class)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/", "/*.html", "/css/**", "/js/**", "/favicon.ico").permitAll()
                         .requestMatchers("/api/auth/login", "/api/auth/cadastro").permitAll()
@@ -45,7 +51,6 @@ public class SecurityConfig {
                 .logout(logout -> logout
                         .logoutUrl("/api/auth/logout")
                         .logoutSuccessHandler((req, res, auth) -> res.setStatus(HttpStatus.OK.value())))
-                // Sem login: devolve 401 em vez de redirecionar para uma página de login
                 .exceptionHandling(e -> e.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)));
 
         return http.build();

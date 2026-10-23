@@ -227,25 +227,13 @@
             <p class="auth-subtitle">Entre com sua conta institucional.</p>
 
             <div class="form-group">
-                <label>Atalho de teste (desenvolvimento)</label>
-                <select id="l-atalho" class="form-control" onchange="atalhoLogin()">
-                    <option value="">— escolher —</option>
-                    <option value="admin@teste.local|Admin@12345">Admin</option>
-                    <option value="aluno1@teste.local|Senha@1234">Aluno 1</option>
-                    <option value="aluno2@teste.local|Senha@1234">Aluno 2</option>
-                    <option value="docente1@teste.local|Senha@1234">Docente 1</option>
-                    <option value="docente2@teste.local|Senha@1234">Docente 2</option>
-                </select>
-            </div>
-
-            <div class="form-group">
                 <label>Matrícula ou e-mail institucional</label>
-                <input id="l-email" class="form-control" placeholder="2023100123 · nome@aluno.instituicao.edu.br" value="aluno1@teste.local">
+                <input id="l-email" class="form-control" placeholder="2023100123 · nome@aluno.instituicao.edu.br">
             </div>
 
             <div class="form-group">
                 <label>Senha</label>
-                <input id="l-senha" type="password" class="form-control" placeholder="••••••••••••" value="Senha@1234">
+                <input id="l-senha" type="password" class="form-control" placeholder="••••••••••••">
             </div>
 
             <div class="form-actions">
@@ -268,36 +256,25 @@
             <h2 class="auth-title">Primeiro acesso</h2>
             <p class="auth-subtitle">Preencha os dados para validar seu cadastro.</p>
 
-            <div class="form-group">
-                <label>Atalho de teste (desenvolvimento)</label>
-                <select id="c-atalho" class="form-control" onchange="atalhoCadastro()">
-                    <option value="">— escolher —</option>
-                    <option value="2026001|11111111111|aluno1@teste.local">Aluno 1</option>
-                    <option value="2026002|22222222222|aluno2@teste.local">Aluno 2</option>
-                    <option value="D001|33333333333|docente1@teste.local">Docente 1</option>
-                    <option value="D002|44444444444|docente2@teste.local">Docente 2</option>
-                </select>
-            </div>
-
             <div style="display: flex; gap: 12px;">
                 <div class="form-group" style="flex:1;">
                     <label>Matrícula</label>
-                    <input id="c-matricula" class="form-control" placeholder="2023100123" value="2026001">
+                    <input id="c-matricula" class="form-control" placeholder="2023100123">
                 </div>
                 <div class="form-group" style="flex:1;">
                     <label>CPF</label>
-                    <input id="c-cpf" class="form-control" placeholder="000.000.000-00" value="11111111111">
+                    <input id="c-cpf" class="form-control" placeholder="000.000.000-00">
                 </div>
             </div>
 
             <div class="form-group">
                 <label>E-mail institucional</label>
-                <input id="c-email" class="form-control" placeholder="nome@aluno.instituicao.edu.br" value="aluno1@teste.local">
+                <input id="c-email" class="form-control" placeholder="nome@aluno.instituicao.edu.br">
             </div>
 
             <div class="form-group">
                 <label>Senha</label>
-                <input id="c-senha" type="password" class="form-control" placeholder="••••••••" value="Senha@1234">
+                <input id="c-senha" type="password" class="form-control" placeholder="••••••••">
             </div>
 
             <div class="info-box">
@@ -350,11 +327,6 @@
             <li class="nav-item">
                 <button id="nav-lista" onclick="ir('lista')">
                     📋 Meus chamados
-                </button>
-            </li>
-            <li class="nav-item">
-                <button id="nav-categorias" class="oculto" onclick="ir('categorias')">
-                    🏷️ Categorias
                 </button>
             </li>
             <li class="nav-item">
@@ -470,15 +442,6 @@
             </div>
         </section>
 
-        <!-- View: Gerenciamento de Categorias (Admin) -->
-        <section id="view-categorias" class="oculto">
-            <div class="panel-card">
-                <h2 class="panel-title">Responsável por categoria</h2>
-                <p class="auth-subtitle">Chamados abertos em cada categoria são atribuídos automaticamente ao docente escolhido.</p>
-                <div id="cat-corpo"></div>
-            </div>
-        </section>
-
         <!-- View: Disciplinas (Admin) -->
         <section id="view-disciplinas" class="oculto">
             <div class="panel-card">
@@ -539,7 +502,25 @@
         toastTimer = setTimeout(() => t.className = '', 3500);
     }
 
+    function lerCookie(nome) {
+        const m = document.cookie.match('(?:^|; )' + nome + '=([^;]*)');
+        return m ? decodeURIComponent(m[1]) : null;
+    }
+
+    // Se não houver cookie de CSRF (primeiro acesso ou após logout), faz uma leitura simples para o servidor emitir um
+    async function garantirCsrf() {
+        if (!lerCookie('XSRF-TOKEN')) {
+            try { await fetch('/api/me'); } catch (e) {}
+        }
+    }
+
     async function api(url, opcoes) {
+        opcoes = opcoes || {};
+        const metodo = (opcoes.method || 'GET').toUpperCase();
+        if (metodo !== 'GET') {
+            await garantirCsrf();
+            opcoes.headers = Object.assign({}, opcoes.headers, { 'X-XSRF-TOKEN': lerCookie('XSRF-TOKEN') || '' });
+        }
         const r = await fetch(url, opcoes);
         const texto = await r.text();
         let corpo = null;
@@ -576,18 +557,6 @@
         }
     }
 
-    function atalhoLogin() {
-        const v = val('l-atalho'); if (!v) return;
-        const [email, senha] = v.split('|');
-        $('l-email').value = email; $('l-senha').value = senha;
-    }
-    function atalhoCadastro() {
-        const v = val('c-atalho'); if (!v) return;
-        const [m, c, e] = v.split('|');
-        $('c-matricula').value = m; $('c-cpf').value = c; $('c-email').value = e;
-        $('c-senha').value = 'Senha@1234';
-    }
-
     async function cadastrar() {
         try {
             const u = await enviar('POST', '/api/auth/cadastro', {
@@ -595,8 +564,6 @@
                 email: val('c-email'), senha: val('c-senha')
             });
             aviso('Acesso criado para ' + u.nome + ' (' + u.perfis.join(', ') + '). Agora é só entrar.');
-            $('l-email').value = val('c-email');
-            $('l-senha').value = val('c-senha');
             mostrarTelaAuth('login');
         } catch (e) { aviso(e.message, 'erro'); }
     }
@@ -621,6 +588,7 @@
     function mostrarAuth() {
         $('tela-app').classList.add('oculto');
         $('tela-auth').classList.remove('oculto');
+        ['l-email', 'l-senha', 'c-matricula', 'c-cpf', 'c-email', 'c-senha'].forEach(id => $(id).value = '');
         mostrarTelaAuth('login');
     }
 
@@ -631,7 +599,6 @@
         $('usuario-info').textContent = eu.nome + ' · ' + eu.perfis.join(', ');
 
         $('nav-novo').classList.toggle('oculto', !temPerfil('DISCENTE'));
-        $('nav-categorias').classList.toggle('oculto', !temPerfil('ADMIN'));
         $('nav-disciplinas').classList.toggle('oculto', !temPerfil('ADMIN'));
 
         $('tela-auth').classList.add('oculto');
@@ -641,16 +608,15 @@
 
     // ---------- Navegação ----------
     function ir(nome) {
-        ['dashboard','lista','novo','categorias','disciplinas','detalhe'].forEach(v => $('view-' + v).classList.add('oculto'));
+        ['dashboard','lista','novo','disciplinas','detalhe'].forEach(v => $('view-' + v).classList.add('oculto'));
         $('view-' + nome).classList.remove('oculto');
-        ['dashboard','lista','novo','categorias','disciplinas'].forEach(v => {
+        ['dashboard','lista','novo','disciplinas'].forEach(v => {
             const btn = $('nav-' + v);
             if (btn) btn.classList.toggle('ativo', v === nome);
         });
         if (nome === 'dashboard') carregarDashboard();
         if (nome === 'lista') carregarLista();
         if (nome === 'novo') carregarCategorias();
-        if (nome === 'categorias') carregarCategoriasAdmin();
         if (nome === 'disciplinas') carregarDisciplinasAdmin();
     }
 
@@ -796,7 +762,7 @@
                 docentes = await api('/api/docentes');
             }
             renderDetalhe(c, docentes);
-            ['dashboard','lista','novo','categorias','disciplinas'].forEach(v => $('view-' + v).classList.add('oculto'));
+            ['dashboard','lista','novo','disciplinas'].forEach(v => $('view-' + v).classList.add('oculto'));
             $('view-detalhe').classList.remove('oculto');
         } catch (e) { aviso(e.message, 'erro'); }
     }
@@ -925,39 +891,6 @@
         } catch (e) { aviso(e.message, 'erro'); }
     }
 
-    // ---------- Responsável por categoria (admin) ----------
-    async function carregarCategoriasAdmin() {
-        try {
-            const [arvore, docentes] = await Promise.all([api('/api/categorias/arvore'), api('/api/docentes')]);
-            if (docentes.length === 0) {
-                $('cat-corpo').innerHTML = '<p class="vazio">Nenhum docente cadastrado. Cadastre os docentes primeiro.</p>';
-                return;
-            }
-            const linhas = [];
-            (function percorrer(nos, nivel) {
-                nos.forEach(no => { linhas.push({ no, nivel }); percorrer(no.filhos, nivel + 1); });
-            })(arvore, 0);
-
-            const opcoes = atual => '<option value="">— sem responsável (triagem do admin) —</option>' +
-                docentes.map(d => '<option value="' + d.id + '"' + (d.id === atual ? ' selected' : '') + '>' + esc(d.nome) + '</option>').join('');
-
-            $('cat-corpo').innerHTML = '<div class="table-responsive"><table><thead><tr><th>Categoria</th><th>Responsável padrão</th></tr></thead><tbody>' +
-                linhas.map(l =>
-                    '<tr style="cursor:default"><td style="padding-left:' + (16 + l.nivel * 24) + 'px">' +
-                    (l.nivel === 0 ? '<b>' + esc(l.no.nome) + '</b>' : esc(l.no.nome)) + '</td>' +
-                    '<td><select class="form-control" onchange="definirResponsavelPadrao(' + l.no.id + ', this.value)">' + opcoes(l.no.responsavelPadraoId) + '</select></td></tr>'
-                ).join('') + '</tbody></table></div>';
-        } catch (e) { aviso(e.message, 'erro'); }
-    }
-
-    async function definirResponsavelPadrao(id, valor) {
-        try {
-            await enviar('PATCH', '/api/categorias/' + id + '/responsavel-padrao',
-                { responsavelId: valor ? Number(valor) : null });
-            aviso('Responsável da categoria atualizado.');
-        } catch (e) { aviso(e.message, 'erro'); carregarCategoriasAdmin(); }
-    }
-
     // ---------- Disciplinas (admin) ----------
     async function carregarDisciplinasAdmin() {
         try {
@@ -967,10 +900,11 @@
 
             $('disc-corpo').innerHTML = disciplinas.length === 0
                 ? '<p class="vazio">Nenhuma disciplina cadastrada.</p>'
-                : '<div class="table-responsive"><table><thead><tr><th>Código</th><th>Disciplina</th><th>Docente</th></tr></thead><tbody>' +
+                : '<div class="table-responsive"><table><thead><tr><th>Código</th><th>Disciplina</th><th>Docente</th><th></th></tr></thead><tbody>' +
                 disciplinas.map(d =>
                     '<tr style="cursor:default"><td><b>' + esc(d.codigo) + '</b></td><td>' + esc(d.nome) + '</td>' +
-                    '<td><select class="form-control" onchange="definirDocenteDisciplina(' + d.id + ', this.value)">' + opcoes(d.docenteId) + '</select></td></tr>'
+                    '<td><select id="disc-doc-' + d.id + '" class="form-control">' + opcoes(d.docenteId) + '</select></td>' +
+                    '<td><button class="btn-primary" style="width:auto; padding:10px 18px; margin:0;" onclick="salvarDocenteDisciplina(' + d.id + ')">Salvar</button></td></tr>'
                 ).join('') + '</tbody></table></div>';
         } catch (e) { aviso(e.message, 'erro'); }
     }
@@ -988,13 +922,15 @@
         } catch (e) { aviso(e.message, 'erro'); }
     }
 
-    async function definirDocenteDisciplina(id, valor) {
+    async function salvarDocenteDisciplina(id) {
+        const valor = $('disc-doc-' + id).value;
         try {
             await enviar('PATCH', '/api/disciplinas/' + id + '/docente', {
                 docenteId: valor ? Number(valor) : null
             });
-            aviso('Docente da disciplina atualizado.');
-        } catch (e) { aviso(e.message, 'erro'); carregarDisciplinasAdmin(); }
+            aviso('Docente da disciplina salvo.');
+            carregarDisciplinasAdmin();
+        } catch (e) { aviso(e.message, 'erro'); }
     }
 
     // ---------- Início ----------

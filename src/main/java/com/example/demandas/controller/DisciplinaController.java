@@ -2,7 +2,7 @@ package com.example.demandas.controller;
 
 import com.example.demandas.dto.DisciplinaRequest;
 import com.example.demandas.dto.DisciplinaResponse;
-import com.example.demandas.dto.ResponsavelPadraoRequest;
+import com.example.demandas.dto.DocenteDisciplinaRequest;
 import com.example.demandas.service.DisciplinaService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -35,8 +35,8 @@ public class DisciplinaController {
     @PatchMapping("/api/disciplinas/{id}/docente")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> definirDocente(@PathVariable Integer id,
-                                               @RequestBody ResponsavelPadraoRequest req) {
-        disciplinaService.definirDocente(id, req.responsavelId());
+                                               @RequestBody DocenteDisciplinaRequest req) {
+        disciplinaService.definirDocente(id, req.docenteId());
         return ResponseEntity.noContent().build();
     }
 }

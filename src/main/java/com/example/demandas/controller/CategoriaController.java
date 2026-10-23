@@ -1,11 +1,9 @@
 package com.example.demandas.controller;
 
 import com.example.demandas.dto.CategoriaNo;
-import com.example.demandas.dto.ResponsavelPadraoRequest;
 import com.example.demandas.service.CategoriaService;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
@@ -21,13 +19,5 @@ public class CategoriaController {
     @GetMapping("/api/categorias/arvore")
     public List<CategoriaNo> arvore() {
         return categoriaService.arvore();
-    }
-
-    @PatchMapping("/api/categorias/{id}/responsavel-padrao")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> definirResponsavelPadrao(@PathVariable Integer id,
-                                                         @RequestBody ResponsavelPadraoRequest req) {
-        categoriaService.definirResponsavelPadrao(id, req.responsavelId());
-        return ResponseEntity.noContent().build();
     }
 }
