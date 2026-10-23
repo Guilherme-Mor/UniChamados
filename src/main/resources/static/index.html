@@ -1,0 +1,1006 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Central de Demandas</title>
+    <style>
+        :root {
+            --primary: #1d61f2;
+            --primary-hover: #154ec4;
+            --sidebar-bg: #0b2e75;
+            --sidebar-active: #1e4596;
+            --accent-yellow: #faba32;
+            --accent-yellow-hover: #e5a728;
+            --bg-main: #f4f7fc;
+            --card-bg: #ffffff;
+            --text-title: #0f172a;
+            --text-body: #334155;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --input-bg: #f8fafc;
+            --radius-lg: 16px;
+            --radius-md: 10px;
+            --radius-sm: 6px;
+
+            --ok: #16a34a;
+            --erro: #dc2626;
+            --aviso: #d97706;
+        }
+
+        * { box-sizing: border-box; }
+        body { margin: 0; font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, sans-serif; background: var(--bg-main); color: var(--text-body); }
+        .oculto { display: none !important; }
+
+        /* ================= TELA DE AUTENTICAÇÃO (SPLIT SCREEN) ================= */
+        .auth-container { display: flex; min-height: 100vh; background: #fff; }
+        .auth-sidebar {
+            width: 42%;
+            background: linear-gradient(135deg, #0b3fa8 0%, #1d61f2 100%);
+            color: #fff;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            overflow: hidden;
+        }
+        .auth-brand { display: flex; align-items: center; gap: 12px; font-weight: 700; font-size: 1.25rem; }
+        .auth-brand-logo {
+            background: #fff; color: #0b3fa8; width: 36px; height: 36px;
+            border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 800;
+        }
+        .auth-hero-title { font-size: 2.2rem; font-weight: 800; line-height: 1.25; margin-bottom: 12px; }
+        .auth-hero-desc { color: #dbeafe; font-size: 0.95rem; line-height: 1.5; max-width: 380px; }
+        .auth-hero-circle {
+            position: absolute; bottom: -80px; right: -80px; width: 320px; height: 320px;
+            background: var(--accent-yellow); border-radius: 50%; opacity: 0.9;
+        }
+
+        .auth-content { flex: 1; padding: 40px 60px; display: flex; flex-direction: column; justify-content: center; max-width: 650px; margin: 0 auto; }
+
+        /* Steps indicator (Primeiro Acesso) */
+        .auth-steps { display: flex; gap: 12px; margin-bottom: 24px; }
+        .step-item { flex: 1; height: 4px; background: #e2e8f0; border-radius: 2px; position: relative; }
+        .step-item.active { background: var(--primary); }
+        .step-label { font-size: 0.8rem; font-weight: 700; color: var(--text-title); margin-top: -22px; position: absolute; }
+
+        .auth-title { font-size: 1.8rem; font-weight: 800; color: var(--text-title); margin: 0 0 8px; }
+        .auth-subtitle { color: var(--text-muted); font-size: 0.95rem; margin-bottom: 24px; }
+
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-title); margin-bottom: 6px; }
+        .form-control {
+            width: 100%; padding: 12px 14px; background: var(--input-bg);
+            border: 1px solid var(--border-color); border-radius: var(--radius-md);
+            font-size: 0.95rem; color: var(--text-title); transition: all 0.2s;
+        }
+        .form-control:focus { outline: none; border-color: var(--primary); background: #fff; box-shadow: 0 0 0 3px rgba(29, 97, 242, 0.15); }
+        select.form-control { cursor: pointer; }
+
+        .form-actions { display: flex; align-items: center; justify-content: space-between; margin: 16px 0 24px; font-size: 0.88rem; }
+        .form-actions label { display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 0.88rem; color: var(--primary); font-weight: 600; }
+        .link-btn { background: none; border: none; color: var(--primary); font-weight: 700; cursor: pointer; padding: 0; font-size: 0.88rem; }
+        .link-btn:hover { text-decoration: underline; }
+
+        .btn-primary {
+            width: 100%; background: var(--primary); color: #fff; border: none;
+            padding: 14px; border-radius: var(--radius-md); font-weight: 700; font-size: 0.95rem;
+            cursor: pointer; transition: background 0.2s; margin-bottom: 12px;
+        }
+        .btn-primary:hover { background: var(--primary-hover); }
+        .btn-outline {
+            width: 100%; background: #fff; color: var(--primary); border: 1px solid var(--primary);
+            padding: 14px; border-radius: var(--radius-md); font-weight: 700; font-size: 0.95rem;
+            cursor: pointer; transition: background 0.2s;
+        }
+        .btn-outline:hover { background: #f0f5ff; }
+
+        .info-box { background: #eff6ff; border-radius: var(--radius-md); padding: 12px 16px; font-size: 0.85rem; color: #1e40af; display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
+
+        /* ================= APP LAYOUT ================= */
+        .app-layout { display: flex; min-height: 100vh; }
+
+        /* Sidebar Navigation */
+        .sidebar { width: 250px; background: var(--sidebar-bg); color: #fff; padding: 24px 16px; display: flex; flex-direction: column; flex-shrink: 0; }
+        .sidebar-brand { display: flex; align-items: center; gap: 12px; font-weight: 700; font-size: 1.15rem; padding: 0 12px 32px; }
+        .sidebar-brand-logo { background: #fff; color: var(--sidebar-bg); width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 800; }
+
+        .nav-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 4px; }
+        .nav-item button {
+            width: 100%; display: flex; align-items: center; gap: 12px; padding: 12px 14px;
+            background: none; border: none; color: #94a3b8; border-radius: var(--radius-md);
+            font-size: 0.92rem; font-weight: 600; cursor: pointer; text-align: left; transition: all 0.2s;
+        }
+        .nav-item button:hover { color: #fff; background: rgba(255,255,255,0.05); }
+        .nav-item button.ativo { background: var(--sidebar-active); color: #fff; }
+
+        /* App Main Content */
+        .app-main { flex: 1; padding: 32px 40px; overflow-y: auto; display: flex; flex-direction: column; }
+        .app-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px; }
+        .app-title { font-size: 1.6rem; font-weight: 800; color: var(--text-title); margin: 0; display: flex; align-items: center; gap: 8px; }
+        .avatar-btn { width: 40px; height: 40px; border-radius: 50%; background: var(--accent-yellow); color: #000; font-weight: 700; border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.1rem; }
+
+        /* KPI Cards Grid */
+        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px; }
+        .kpi-card { background: var(--card-bg); border-radius: var(--radius-lg); padding: 20px; border: 1px solid var(--border-color); box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+        .kpi-number { font-size: 2.2rem; font-weight: 800; color: var(--text-title); line-height: 1; margin-bottom: 6px; }
+        .kpi-label { font-size: 0.85rem; font-weight: 600; color: var(--text-muted); }
+
+        /* Callout Box */
+        .callout-box {
+            background: linear-gradient(135deg, #0b3fa8 0%, #1d61f2 100%);
+            border-radius: var(--radius-lg); padding: 24px; color: #fff;
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px;
+        }
+        .callout-title { font-size: 1.15rem; font-weight: 700; margin: 0 0 4px; }
+        .callout-desc { font-size: 0.9rem; color: #dbeafe; margin: 0; }
+        .btn-callout {
+            background: var(--accent-yellow); color: #000; border: none;
+            padding: 12px 20px; border-radius: var(--radius-md); font-weight: 700; font-size: 0.9rem;
+            cursor: pointer; transition: background 0.2s; white-space: nowrap;
+        }
+        .btn-callout:hover { background: var(--accent-yellow-hover); }
+
+        /* General Cards */
+        .panel-card { background: var(--card-bg); border-radius: var(--radius-lg); border: 1px solid var(--border-color); padding: 24px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+        .panel-title { font-size: 1.1rem; font-weight: 700; color: var(--text-title); margin: 0 0 16px; }
+
+        /* Tables */
+        .table-responsive { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th { font-size: 0.8rem; font-weight: 700; color: var(--text-muted); text-transform: capitalize; padding: 12px 16px; border-bottom: 1px solid var(--border-color); background: #fafca00; }
+        td { padding: 16px; border-bottom: 1px solid var(--border-color); font-size: 0.9rem; color: var(--text-title); }
+        tbody tr { cursor: pointer; transition: background 0.15s; }
+        tbody tr:hover { background: #f8fafc; }
+
+        /* Badges */
+        .badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 0.78rem; font-weight: 700; }
+        .s-ABERTO { background: #dbeafe; color: #1e40af; }
+        .s-ATRIBUIDO { background: #ede9fe; color: #5b21b6; }
+        .s-EM_ATENDIMENTO { background: #e0f2fe; color: #0369a1; }
+        .s-AGUARDANDO_DISCENTE { background: #fef3c7; color: #92400e; }
+        .s-RESOLVIDO { background: #dcfce7; color: #15803d; }
+        .s-ENCERRADO { background: #f1f5f9; color: #475569; }
+        .s-CANCELADO { background: #fee2e2; color: #b91c1c; }
+
+        /* Custom Two-Column Layout for "Novo Chamado" */
+        .split-view { display: flex; gap: 32px; }
+        .split-sidebar { width: 280px; flex-shrink: 0; }
+        .split-content { flex: 1; }
+
+        .cat-tree-title { font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 12px; text-transform: uppercase; }
+        .cat-tree-item {
+            padding: 10px 14px; border-radius: var(--radius-md); font-weight: 600; font-size: 0.9rem;
+            color: var(--text-body); cursor: pointer; transition: all 0.15s; margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between;
+        }
+        .cat-tree-item:hover { background: #f1f5f9; }
+        .cat-tree-item.active { background: #eff6ff; color: var(--primary); font-weight: 700; }
+
+        .dropzone {
+            border: 2px dashed #cbd5e1; border-radius: var(--radius-md); padding: 24px;
+            text-align: center; color: var(--text-muted); font-size: 0.88rem; background: var(--input-bg);
+            margin-bottom: 20px; cursor: pointer; transition: border-color 0.2s;
+        }
+        .dropzone:hover { border-color: var(--primary); }
+
+        /* Detalhe Timeline */
+        .meta-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; margin: 16px 0; font-size: 0.9rem; }
+        .meta-grid span { display: block; color: var(--text-muted); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; margin-bottom: 2px; }
+
+        .timeline { list-style: none; margin: 20px 0 0; padding: 0 0 0 16px; border-left: 2px solid var(--border-color); }
+        .timeline li { position: relative; margin-bottom: 20px; padding-left: 16px; }
+        .timeline li::before { content: ""; position: absolute; left: -23px; top: 4px; width: 12px; height: 12px; border-radius: 50%; background: var(--primary); border: 2px solid #fff; }
+        .tl-topo { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 4px; }
+        .tl-tipo { font-weight: 700; color: var(--text-title); }
+        .tl-msg { background: var(--input-bg); padding: 12px; border-radius: var(--radius-md); font-size: 0.9rem; white-space: pre-wrap; margin-top: 6px; }
+
+        /* Toast */
+        #toast { position: fixed; right: 24px; bottom: 24px; max-width: 360px; padding: 14px 20px; border-radius: var(--radius-md); color: #fff; font-size: 0.9rem; font-weight: 600; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); opacity: 0; transform: translateY(10px); transition: all .25s; pointer-events: none; z-index: 100; }
+        #toast.mostra { opacity: 1; transform: translateY(0); }
+        #toast.ok { background: var(--ok); }
+        #toast.erro { background: var(--erro); }
+    </style>
+</head>
+<body>
+
+<!-- ================= TELA DE AUTENTICAÇÃO ================= -->
+<div id="tela-auth" class="auth-container">
+    <!-- Painel Esquerdo Visual -->
+    <div class="auth-sidebar">
+        <div class="auth-brand">
+            <div class="auth-brand-logo">U</div>
+            <span>Central de Demandas</span>
+        </div>
+        <div>
+            <h1 id="auth-hero-title" class="auth-hero-title">Suas solicitações acadêmicas, em um só lugar.</h1>
+            <p id="auth-hero-desc" class="auth-hero-desc">Abra chamados, acompanhe prazos e receba respostas de forma rápida e transparente.</p>
+        </div>
+        <div class="auth-hero-circle"></div>
+    </div>
+
+    <!-- Conteúdo do Formulário -->
+    <div class="auth-content">
+        <!-- FORMULARIO DE LOGIN -->
+        <div id="form-login">
+            <h2 class="auth-title">Bem-vindo de volta</h2>
+            <p class="auth-subtitle">Entre com sua conta institucional.</p>
+
+            <div class="form-group">
+                <label>Atalho de teste (desenvolvimento)</label>
+                <select id="l-atalho" class="form-control" onchange="atalhoLogin()">
+                    <option value="">— escolher —</option>
+                    <option value="admin@teste.local|Admin@12345">Admin</option>
+                    <option value="aluno1@teste.local|Senha@1234">Aluno 1</option>
+                    <option value="aluno2@teste.local|Senha@1234">Aluno 2</option>
+                    <option value="docente1@teste.local|Senha@1234">Docente 1</option>
+                    <option value="docente2@teste.local|Senha@1234">Docente 2</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Matrícula ou e-mail institucional</label>
+                <input id="l-email" class="form-control" placeholder="2023100123 · nome@aluno.instituicao.edu.br" value="aluno1@teste.local">
+            </div>
+
+            <div class="form-group">
+                <label>Senha</label>
+                <input id="l-senha" type="password" class="form-control" placeholder="••••••••••••" value="Senha@1234">
+            </div>
+
+            <div class="form-actions">
+                <label><input type="checkbox" checked> Lembrar de mim</label>
+                <button type="button" class="link-btn" onclick="mostrarTelaAuth('recuperar')">Esqueci minha senha</button>
+            </div>
+
+            <button class="btn-primary" onclick="entrar()">Entrar</button>
+            <button class="btn-outline" onclick="mostrarTelaAuth('cadastro')">Primeiro acesso</button>
+        </div>
+
+        <!-- FORMULARIO DE PRIMEIRA VEZ / CADASTRO -->
+        <div id="form-cadastro" class="oculto">
+            <div class="auth-steps">
+                <div class="step-item active"><span class="step-label">1 Identificação</span></div>
+                <div class="step-item"></div>
+                <div class="step-item"></div>
+            </div>
+
+            <h2 class="auth-title">Primeiro acesso</h2>
+            <p class="auth-subtitle">Preencha os dados para validar seu cadastro.</p>
+
+            <div class="form-group">
+                <label>Atalho de teste (desenvolvimento)</label>
+                <select id="c-atalho" class="form-control" onchange="atalhoCadastro()">
+                    <option value="">— escolher —</option>
+                    <option value="2026001|11111111111|aluno1@teste.local">Aluno 1</option>
+                    <option value="2026002|22222222222|aluno2@teste.local">Aluno 2</option>
+                    <option value="D001|33333333333|docente1@teste.local">Docente 1</option>
+                    <option value="D002|44444444444|docente2@teste.local">Docente 2</option>
+                </select>
+            </div>
+
+            <div style="display: flex; gap: 12px;">
+                <div class="form-group" style="flex:1;">
+                    <label>Matrícula</label>
+                    <input id="c-matricula" class="form-control" placeholder="2023100123" value="2026001">
+                </div>
+                <div class="form-group" style="flex:1;">
+                    <label>CPF</label>
+                    <input id="c-cpf" class="form-control" placeholder="000.000.000-00" value="11111111111">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>E-mail institucional</label>
+                <input id="c-email" class="form-control" placeholder="nome@aluno.instituicao.edu.br" value="aluno1@teste.local">
+            </div>
+
+            <div class="form-group">
+                <label>Senha</label>
+                <input id="c-senha" type="password" class="form-control" placeholder="••••••••" value="Senha@1234">
+            </div>
+
+            <div class="info-box">
+                🔒 Mínimo de 8 caracteres, com letras e números.
+            </div>
+
+            <button class="btn-primary" onclick="cadastrar()">Validar e continuar</button>
+            <button class="btn-outline" onclick="mostrarTelaAuth('login')">Voltar ao login</button>
+        </div>
+
+        <!-- FORMULARIO DE RECUPERAÇÃO DE SENHA -->
+        <div id="form-recuperar" class="oculto">
+            <button class="link-btn" style="margin-bottom: 16px;" onclick="mostrarTelaAuth('login')">← Voltar ao login</button>
+            <h2 class="auth-title">Esqueceu a senha?</h2>
+            <p class="auth-subtitle">Informe seu e-mail e enviaremos as instruções.</p>
+
+            <div class="form-group">
+                <label>E-mail institucional</label>
+                <input class="form-control" placeholder="nome@aluno.instituicao.edu.br">
+            </div>
+
+            <button class="btn-primary" onclick="aviso('Link enviado para o seu e-mail!'); mostrarTelaAuth('login');">Enviar link de recuperação</button>
+
+            <div class="info-box" style="margin-top: 16px;">
+                ✉️ Link válido por 30 minutos. Não recebeu? Confira o spam.
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ================= APLICAÇÃO PRINCIPAL ================= -->
+<div id="tela-app" class="app-layout oculto">
+    <!-- Sidebar Navegação -->
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <div class="sidebar-brand-logo">U</div>
+            <span>Demandas</span>
+        </div>
+        <ul class="nav-list">
+            <li class="nav-item">
+                <button id="nav-dashboard" class="ativo" onclick="ir('dashboard')">
+                    📊 Início
+                </button>
+            </li>
+            <li class="nav-item">
+                <button id="nav-novo" onclick="ir('novo')">
+                    ✏️ Abrir chamado
+                </button>
+            </li>
+            <li class="nav-item">
+                <button id="nav-lista" onclick="ir('lista')">
+                    📋 Meus chamados
+                </button>
+            </li>
+            <li class="nav-item">
+                <button id="nav-categorias" class="oculto" onclick="ir('categorias')">
+                    🏷️ Categorias
+                </button>
+            </li>
+            <li class="nav-item">
+                <button id="nav-disciplinas" class="oculto" onclick="ir('disciplinas')">
+                    📚 Disciplinas
+                </button>
+            </li>
+        </ul>
+    </aside>
+
+    <!-- Área de Conteúdo -->
+    <main class="app-main">
+        <header class="app-header">
+            <h1 id="app-user-greeting" class="app-title">Olá <span id="user-display-name"></span> 👋</h1>
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <span id="usuario-info" style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;"></span>
+                <button class="avatar-btn" title="Sair" onclick="sair()">M</button>
+            </div>
+        </header>
+
+        <!-- View: Dashboard -->
+        <section id="view-dashboard" class="oculto">
+            <div id="dash-grade" class="kpi-grid"></div>
+
+            <div class="callout-box">
+                <div>
+                    <h3 class="callout-title">Precisa de ajuda?</h3>
+                    <p class="callout-desc">Escolha a categoria e abra um chamado em 1 minuto.</p>
+                </div>
+                <button class="btn-callout" onclick="ir('novo')">+ Novo chamado</button>
+            </div>
+
+            <div class="panel-card">
+                <h3 class="panel-title">Chamados recentes</h3>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                        <tr><th>Protocolo</th><th>Assunto</th><th>Status</th><th>Aberto em</th></tr>
+                        </thead>
+                        <tbody id="dash-lista-corpo"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- View: Lista de Chamados -->
+        <section id="view-lista" class="oculto">
+            <div class="panel-card">
+                <h2 id="lista-titulo" class="panel-title">Chamados</h2>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                        <tr><th>Protocolo</th><th>Título</th><th>Categoria</th><th>Status</th><th>Solicitante</th><th>Responsável</th><th>Aberto em</th></tr>
+                        </thead>
+                        <tbody id="lista-corpo"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- View: Novo Chamado (Modern Split Layout) -->
+        <section id="view-novo" class="oculto">
+            <div class="panel-card">
+                <div class="split-view">
+                    <!-- Categorias à Esquerda -->
+                    <div class="split-sidebar">
+                        <div class="cat-tree-title">1 · Escolha a demanda</div>
+                        <div id="cat-tree-container"></div>
+                    </div>
+
+                    <!-- Formulário à Direita -->
+                    <div class="split-content">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                            <h2 class="panel-title" style="margin:0;">Novo chamado</h2>
+                            <span class="badge s-ABERTO" style="background:#e0f2fe; color:#0284c7;">Prazo estimado: 72h</span>
+                        </div>
+
+                        <div id="selected-cat-path" class="info-box" style="margin-bottom: 20px; font-weight: 700;">
+                            Selecione uma categoria
+                        </div>
+
+                        <div class="form-group">
+                            <label>Categoria</label>
+                            <select id="n-categoria" class="form-control" onchange="aoMudarCategoria()"></select>
+                        </div>
+
+                        <div id="n-disc-wrap" class="form-group oculto">
+                            <label>Disciplina</label>
+                            <select id="n-disciplina" class="form-control"></select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Título</label>
+                            <input id="n-titulo" class="form-control" maxlength="150" placeholder="Ex: Solicito revisão da nota da AV2">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Descrição</label>
+                            <textarea id="n-descricao" class="form-control" maxlength="5000" placeholder="Descreva o que aconteceu, disciplina, professor e período..."></textarea>
+                        </div>
+
+                        <div class="dropzone">
+                            📎 Arraste arquivos aqui ou <span style="color:var(--primary); font-weight:700;">selecione</span>
+                            <div style="font-size: 0.75rem; margin-top: 4px;">PDF, JPG ou PNG · até 10 MB</div>
+                        </div>
+
+                        <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px;">
+                            <button class="btn-outline" style="width: auto; padding: 10px 24px;" onclick="ir('lista')">Cancelar</button>
+                            <button class="btn-primary" style="width: auto; padding: 10px 24px; margin: 0;" onclick="abrirChamado()">Enviar chamado</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- View: Gerenciamento de Categorias (Admin) -->
+        <section id="view-categorias" class="oculto">
+            <div class="panel-card">
+                <h2 class="panel-title">Responsável por categoria</h2>
+                <p class="auth-subtitle">Chamados abertos em cada categoria são atribuídos automaticamente ao docente escolhido.</p>
+                <div id="cat-corpo"></div>
+            </div>
+        </section>
+
+        <!-- View: Disciplinas (Admin) -->
+        <section id="view-disciplinas" class="oculto">
+            <div class="panel-card">
+                <h2 class="panel-title">Nova disciplina</h2>
+                <div style="display: flex; gap: 16px; margin-bottom: 16px;">
+                    <div class="form-group" style="flex:1;">
+                        <label>Código</label>
+                        <input id="dc-codigo" class="form-control" maxlength="20" placeholder="Ex: MAT01">
+                    </div>
+                    <div class="form-group" style="flex:2;">
+                        <label>Nome</label>
+                        <input id="dc-nome" class="form-control" maxlength="150" placeholder="Ex: Cálculo II">
+                    </div>
+                </div>
+                <button class="btn-primary" style="width:auto; padding: 10px 20px;" onclick="criarDisciplina()">Adicionar disciplina</button>
+            </div>
+
+            <div class="panel-card">
+                <h2 class="panel-title">Docente por disciplina</h2>
+                <p class="auth-subtitle">Chamados de categorias que exigem disciplina são atribuídos ao docente escolhido aqui.</p>
+                <div id="disc-corpo"></div>
+            </div>
+        </section>
+
+        <!-- View: Detalhe do Chamado -->
+        <section id="view-detalhe" class="oculto"></section>
+    </main>
+</div>
+
+<div id="toast"></div>
+
+<script>
+    // ---------- Utilitários ----------
+    const STATUS = ['ABERTO','ATRIBUIDO','EM_ATENDIMENTO','AGUARDANDO_DISCENTE','RESOLVIDO','ENCERRADO','CANCELADO'];
+    const STATUS_EDITAVEIS = ['ATRIBUIDO','EM_ATENDIMENTO','AGUARDANDO_DISCENTE','RESOLVIDO','ENCERRADO','CANCELADO'];
+    const FINAIS = ['ENCERRADO','CANCELADO'];
+    let eu = null;
+    let chamadoAbertoId = null;
+    let toastTimer = null;
+
+    const $ = id => document.getElementById(id);
+    const val = id => $(id).value;
+    const esc = t => String(t ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+    function data(d) {
+        if (!d) return '—';
+        const dt = Array.isArray(d) ? new Date(d[0], d[1]-1, d[2], d[3]||0, d[4]||0, d[5]||0) : new Date(d);
+        return isNaN(dt) ? '—' : dt.toLocaleString('pt-BR');
+    }
+    function badge(s) { return `<span class="badge s-${esc(s)}">${esc(s.replaceAll('_',' '))}</span>`; }
+    function temPerfil(p) { return eu && eu.perfis.includes(p); }
+
+    function aviso(msg, tipo) {
+        const t = $('toast');
+        t.textContent = msg;
+        t.className = 'mostra ' + (tipo || 'ok');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => t.className = '', 3500);
+    }
+
+    async function api(url, opcoes) {
+        const r = await fetch(url, opcoes);
+        const texto = await r.text();
+        let corpo = null;
+        try { corpo = texto ? JSON.parse(texto) : null; } catch (e) {}
+        if (!r.ok) {
+            if (r.status === 401 && eu) {
+                eu = null; mostrarAuth();
+                throw new Error('Sessão expirada. Entre novamente.');
+            }
+            const msg = (corpo && corpo.erro) ? corpo.erro : (r.status === 403 ? 'Acesso negado.' : 'Erro ' + r.status);
+            throw new Error(msg);
+        }
+        return corpo;
+    }
+    const enviar = (metodo, url, obj) => api(url, {
+        method: metodo, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(obj)
+    });
+
+    // ---------- Acesso (Telas & Alternância Layout Protótipo) ----------
+    function mostrarTelaAuth(qual) {
+        $('form-login').classList.toggle('oculto', qual !== 'login');
+        $('form-cadastro').classList.toggle('oculto', qual !== 'cadastro');
+        $('form-recuperar').classList.toggle('oculto', qual !== 'recuperar');
+
+        if (qual === 'cadastro') {
+            $('auth-hero-title').textContent = "Vamos validar seu vínculo institucional.";
+            $('auth-hero-desc').textContent = "Seus dados são conferidos com a base da instituição antes de criar o acesso.";
+        } else if (qual === 'recuperar') {
+            $('auth-hero-title').textContent = "Recupere seu acesso com segurança.";
+            $('auth-hero-desc').textContent = "Enviaremos um link temporário para o seu e-mail institucional.";
+        } else {
+            $('auth-hero-title').textContent = "Suas solicitações acadêmicas, em um só lugar.";
+            $('auth-hero-desc').textContent = "Abra chamados, acompanhe prazos e receba respostas de forma rápida e transparente.";
+        }
+    }
+
+    function atalhoLogin() {
+        const v = val('l-atalho'); if (!v) return;
+        const [email, senha] = v.split('|');
+        $('l-email').value = email; $('l-senha').value = senha;
+    }
+    function atalhoCadastro() {
+        const v = val('c-atalho'); if (!v) return;
+        const [m, c, e] = v.split('|');
+        $('c-matricula').value = m; $('c-cpf').value = c; $('c-email').value = e;
+        $('c-senha').value = 'Senha@1234';
+    }
+
+    async function cadastrar() {
+        try {
+            const u = await enviar('POST', '/api/auth/cadastro', {
+                matricula: val('c-matricula'), cpf: val('c-cpf'),
+                email: val('c-email'), senha: val('c-senha')
+            });
+            aviso('Acesso criado para ' + u.nome + ' (' + u.perfis.join(', ') + '). Agora é só entrar.');
+            $('l-email').value = val('c-email');
+            $('l-senha').value = val('c-senha');
+            mostrarTelaAuth('login');
+        } catch (e) { aviso(e.message, 'erro'); }
+    }
+
+    async function entrar() {
+        try {
+            await api('/api/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({ email: val('l-email'), senha: val('l-senha') })
+            });
+            await iniciarApp();
+        } catch (e) { aviso(e.message, 'erro'); }
+    }
+
+    async function sair() {
+        try { await api('/api/auth/logout', { method: 'POST' }); } catch (e) {}
+        eu = null;
+        mostrarAuth();
+    }
+
+    function mostrarAuth() {
+        $('tela-app').classList.add('oculto');
+        $('tela-auth').classList.remove('oculto');
+        mostrarTelaAuth('login');
+    }
+
+    async function iniciarApp() {
+        eu = await api('/api/me');
+        const primeiroNome = eu.nome ? eu.nome.split(' ')[0] : '';
+        $('user-display-name').textContent = primeiroNome;
+        $('usuario-info').textContent = eu.nome + ' · ' + eu.perfis.join(', ');
+
+        $('nav-novo').classList.toggle('oculto', !temPerfil('DISCENTE'));
+        $('nav-categorias').classList.toggle('oculto', !temPerfil('ADMIN'));
+        $('nav-disciplinas').classList.toggle('oculto', !temPerfil('ADMIN'));
+
+        $('tela-auth').classList.add('oculto');
+        $('tela-app').classList.remove('oculto');
+        ir('dashboard');
+    }
+
+    // ---------- Navegação ----------
+    function ir(nome) {
+        ['dashboard','lista','novo','categorias','disciplinas','detalhe'].forEach(v => $('view-' + v).classList.add('oculto'));
+        $('view-' + nome).classList.remove('oculto');
+        ['dashboard','lista','novo','categorias','disciplinas'].forEach(v => {
+            const btn = $('nav-' + v);
+            if (btn) btn.classList.toggle('ativo', v === nome);
+        });
+        if (nome === 'dashboard') carregarDashboard();
+        if (nome === 'lista') carregarLista();
+        if (nome === 'novo') carregarCategorias();
+        if (nome === 'categorias') carregarCategoriasAdmin();
+        if (nome === 'disciplinas') carregarDisciplinasAdmin();
+    }
+
+    // ---------- Dashboard ----------
+    async function carregarDashboard() {
+        try {
+            const [itens, lista] = await Promise.all([api('/api/dashboard'), api('/api/chamados')]);
+            const mapa = {};
+            itens.forEach(i => mapa[i.status] = i.quantidade);
+
+            $('dash-grade').innerHTML = `
+                <div class="kpi-card">
+                    <div class="kpi-number">${mapa['ABERTO'] || 0}</div>
+                    <div class="kpi-label">Abertos</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-number">${mapa['AGUARDANDO_DISCENTE'] || 0}</div>
+                    <div class="kpi-label">Aguardando você</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-number">${mapa['EM_ATENDIMENTO'] || 0}</div>
+                    <div class="kpi-label">Em atendimento</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-number">${mapa['RESOLVIDO'] || 0}</div>
+                    <div class="kpi-label">Resolvidos</div>
+                </div>
+            `;
+
+            const ultimos = lista.slice(0, 5);
+            $('dash-lista-corpo').innerHTML = ultimos.length === 0
+                ? '<tr><td colspan="4" class="vazio">Nenhum chamado recente.</td></tr>'
+                : ultimos.map(c => `
+                    <tr onclick="abrirDetalhe(${c.id})">
+                        <td><b>${esc(c.protocolo)}</b></td>
+                        <td>${esc(c.titulo)}</td>
+                        <td>${badge(c.status)}</td>
+                        <td>${data(c.criadoEm)}</td>
+                    </tr>
+                `).join('');
+        } catch (e) { aviso(e.message, 'erro'); }
+    }
+
+    // ---------- Lista ----------
+    async function carregarLista() {
+        $('lista-titulo').textContent = temPerfil('ADMIN') ? 'Todos os chamados'
+            : temPerfil('DOCENTE') ? 'Chamados atribuídos a mim' : 'Meus chamados';
+        try {
+            const lista = await api('/api/chamados');
+            $('lista-corpo').innerHTML = lista.length === 0
+                ? '<tr><td colspan="7" class="vazio">Nenhum chamado encontrado.</td></tr>'
+                : lista.map(c => `
+          <tr onclick="abrirDetalhe(${c.id})">
+            <td><b>${esc(c.protocolo)}</b></td>
+            <td>${esc(c.titulo)}</td>
+            <td>${esc(c.categoria)}</td>
+            <td>${badge(c.status)}</td>
+            <td>${esc(c.solicitante)}</td>
+            <td>${esc(c.responsavel || '—')}</td>
+            <td>${data(c.criadoEm)}</td>
+          </tr>`).join('');
+        } catch (e) { aviso(e.message, 'erro'); }
+    }
+
+    // ---------- Novo chamado ----------
+    let catExige = {};
+    async function carregarCategorias() {
+        try {
+            const [arvore, disciplinas] = await Promise.all([api('/api/categorias/arvore'), api('/api/disciplinas')]);
+            const sel = $('n-categoria');
+            const treeContainer = $('cat-tree-container');
+
+            sel.innerHTML = '';
+            treeContainer.innerHTML = '';
+            catExige = {};
+
+            (function percorrer(nos, caminho) {
+                nos.forEach(no => {
+                    const nome = caminho ? caminho + ' > ' + no.nome : no.nome;
+                    if (no.filhos.length === 0) {
+                        sel.add(new Option(nome, no.id));
+                        catExige[no.id] = no.exigeDisciplina;
+                    } else percorrer(no.filhos, nome);
+                });
+            })(arvore, '');
+
+            // Renderizar Árvore Esquerda (Protótipo Image 05)
+            arvore.forEach(cat => {
+                const item = document.createElement('div');
+                item.className = 'cat-tree-item';
+                item.innerHTML = `<span>▶ ${esc(cat.nome)}</span>`;
+                item.onclick = () => {
+                    document.querySelectorAll('.cat-tree-item').forEach(e => e.classList.remove('active'));
+                    item.classList.add('active');
+                    if(cat.filhos.length > 0 && cat.filhos[0].filhos.length === 0) {
+                        sel.value = cat.filhos[0].id;
+                    }
+                    aoMudarCategoria();
+                };
+                treeContainer.appendChild(item);
+            });
+
+            $('n-disciplina').innerHTML = disciplinas
+                .map(d => '<option value="' + d.id + '">' + esc(d.codigo) + ' — ' + esc(d.nome) + '</option>').join('');
+
+            aoMudarCategoria();
+        } catch (e) { aviso(e.message, 'erro'); }
+    }
+
+    function aoMudarCategoria() {
+        const selectedOption = $('n-categoria').options[$('n-categoria').selectedIndex];
+        if (selectedOption) {
+            $('selected-cat-path').textContent = selectedOption.text;
+        }
+        atualizarDisciplina();
+    }
+
+    function atualizarDisciplina() {
+        $('n-disc-wrap').classList.toggle('oculto', !catExige[Number(val('n-categoria'))]);
+    }
+
+    async function abrirChamado() {
+        try {
+            const c = await enviar('POST', '/api/chamados', {
+                categoriaId: Number(val('n-categoria')),
+                disciplinaId: catExige[Number(val('n-categoria'))] ? Number(val('n-disciplina')) : null,
+                titulo: val('n-titulo'),
+                descricao: val('n-descricao')
+            });
+            aviso('Chamado aberto. Protocolo ' + c.protocolo + (c.responsavel ? '. Responsável: ' + c.responsavel : '. Aguardando triagem.'));
+            $('n-titulo').value = ''; $('n-descricao').value = '';
+            abrirDetalhe(c.id);
+        } catch (e) { aviso(e.message, 'erro'); }
+    }
+
+    // ---------- Detalhe ----------
+    async function abrirDetalhe(id) {
+        chamadoAbertoId = id;
+        try {
+            const c = await api('/api/chamados/' + id);
+            let docentes = [];
+            if (temPerfil('ADMIN') && !FINAIS.includes(c.status)) {
+                docentes = await api('/api/docentes');
+            }
+            renderDetalhe(c, docentes);
+            ['dashboard','lista','novo','categorias','disciplinas'].forEach(v => $('view-' + v).classList.add('oculto'));
+            $('view-detalhe').classList.remove('oculto');
+        } catch (e) { aviso(e.message, 'erro'); }
+    }
+
+    function renderDetalhe(c, docentes) {
+        const final = FINAIS.includes(c.status);
+
+        const historico = c.historico.map(i => `
+          <li class="t-${esc(i.tipo)}">
+            <div class="tl-topo"><span class="tl-tipo">${esc(i.tipo.replaceAll('_',' '))}</span> · ${esc(i.autor)} · ${data(i.criadoEm)}</div>
+            <div class="tl-msg">${esc(i.mensagem || '')}</div>
+          </li>`).join('');
+
+        let acoes = '';
+        if (final) {
+            acoes = `<div class="panel-card"><p class="vazio" style="padding:0">Este chamado está ${esc(c.status.toLowerCase())} e não aceita novas ações.</p></div>`;
+        } else {
+            if (temPerfil('ADMIN')) {
+                acoes += `
+          <div class="panel-card">
+            <h3 class="panel-title">Atribuir a um docente</h3>
+            <select id="d-docente" class="form-control">
+              ${docentes.length === 0 ? '<option value="">Nenhum docente cadastrado</option>' : ''}
+              ${docentes.map(d => `<option value="${d.id}">${esc(d.nome)} (${esc(d.email)})</option>`).join('')}
+            </select>
+            <button class="btn-primary" style="width:auto; margin-top:12px;" onclick="atribuir()">Atribuir</button>
+          </div>`;
+            }
+            if (temPerfil('ADMIN') || temPerfil('DOCENTE')) {
+                acoes += `
+          <div class="panel-card">
+            <h3 class="panel-title">Alterar status</h3>
+            <div style="display:flex; gap:12px;">
+              <div style="flex:1;">
+                <label style="font-size:0.8rem; font-weight:700;">Novo status</label>
+                <select id="d-status" class="form-control">${STATUS_EDITAVEIS.filter(s => s !== c.status).map(s => `<option>${s}</option>`).join('')}</select>
+              </div>
+              <div style="flex:2;">
+                <label style="font-size:0.8rem; font-weight:700;">Observação (opcional)</label>
+                <input id="d-obs" class="form-control" maxlength="2000">
+              </div>
+            </div>
+            <button class="btn-primary" style="width:auto; margin-top:12px;" onclick="mudarStatus()">Alterar status</button>
+          </div>`;
+            } else if (c.status !== 'RESOLVIDO') {
+                acoes += `
+          <div class="panel-card">
+            <h3 class="panel-title">Cancelar chamado</h3>
+            <div class="form-group">
+                <label>Motivo (opcional)</label>
+                <input id="d-obs" class="form-control" maxlength="2000">
+            </div>
+            <button class="btn-primary" style="background:var(--erro); width:auto;" onclick="cancelar()">Cancelar chamado</button>
+          </div>`;
+            }
+            acoes += `
+        <div class="panel-card">
+          <h3 class="panel-title">Nova mensagem</h3>
+          <textarea id="d-msg" class="form-control" maxlength="5000" placeholder="Escreva sua mensagem..."></textarea>
+          <button class="btn-primary" style="width:auto; margin-top:12px;" onclick="enviarMensagem()">Enviar mensagem</button>
+        </div>`;
+        }
+
+        $('view-detalhe').innerHTML = `
+      <button class="link-btn" style="margin-bottom:16px;" onclick="ir('lista')">← Voltar à lista</button>
+      <div class="panel-card">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <h2 class="panel-title" style="font-size:1.4rem; margin:0;">${esc(c.titulo)}</h2>
+            ${badge(c.status)}
+        </div>
+        <div class="meta-grid">
+          <div><span>Protocolo</span>${esc(c.protocolo)}</div>
+          <div><span>Categoria</span>${esc(c.categoria)}</div>
+          <div><span>Disciplina</span>${esc(c.disciplina || '—')}</div>
+          <div><span>Prioridade</span>${esc(c.prioridade)}</div>
+          <div><span>Solicitante</span>${esc(c.solicitante)}</div>
+          <div><span>Responsável</span>${esc(c.responsavel || 'Não atribuído')}</div>
+          <div><span>Aberto em</span>${data(c.criadoEm)}</div>
+          <div><span>Atualizado em</span>${data(c.atualizadoEm)}</div>
+        </div>
+        <div class="tl-msg" style="background:#f8fafc; border:1px solid var(--border-color); font-size:0.95rem;">${esc(c.descricao)}</div>
+      </div>
+      ${acoes}
+      <div class="panel-card">
+        <h3 class="panel-title">Histórico</h3>
+        <ul class="timeline">${historico}</ul>
+      </div>`;
+    }
+
+    async function atribuir() {
+        const id = val('d-docente');
+        if (!id) { aviso('Selecione um docente.', 'erro'); return; }
+        try {
+            await enviar('PATCH', `/api/chamados/${chamadoAbertoId}/responsavel`, { responsavelId: Number(id) });
+            aviso('Chamado atribuído.');
+            abrirDetalhe(chamadoAbertoId);
+        } catch (e) { aviso(e.message, 'erro'); }
+    }
+
+    async function mudarStatus() {
+        try {
+            await enviar('PATCH', `/api/chamados/${chamadoAbertoId}/status`, {
+                status: val('d-status'), mensagem: val('d-obs')
+            });
+            aviso('Status alterado.');
+            abrirDetalhe(chamadoAbertoId);
+        } catch (e) { aviso(e.message, 'erro'); }
+    }
+
+    async function cancelar() {
+        if (!confirm('Cancelar este chamado? Essa ação não pode ser desfeita.')) return;
+        try {
+            await enviar('PATCH', `/api/chamados/${chamadoAbertoId}/status`, {
+                status: 'CANCELADO', mensagem: val('d-obs')
+            });
+            aviso('Chamado cancelado.');
+            abrirDetalhe(chamadoAbertoId);
+        } catch (e) { aviso(e.message, 'erro'); }
+    }
+
+    async function enviarMensagem() {
+        try {
+            await enviar('POST', `/api/chamados/${chamadoAbertoId}/interacoes`, { mensagem: val('d-msg') });
+            aviso('Mensagem enviada.');
+            abrirDetalhe(chamadoAbertoId);
+        } catch (e) { aviso(e.message, 'erro'); }
+    }
+
+    // ---------- Responsável por categoria (admin) ----------
+    async function carregarCategoriasAdmin() {
+        try {
+            const [arvore, docentes] = await Promise.all([api('/api/categorias/arvore'), api('/api/docentes')]);
+            if (docentes.length === 0) {
+                $('cat-corpo').innerHTML = '<p class="vazio">Nenhum docente cadastrado. Cadastre os docentes primeiro.</p>';
+                return;
+            }
+            const linhas = [];
+            (function percorrer(nos, nivel) {
+                nos.forEach(no => { linhas.push({ no, nivel }); percorrer(no.filhos, nivel + 1); });
+            })(arvore, 0);
+
+            const opcoes = atual => '<option value="">— sem responsável (triagem do admin) —</option>' +
+                docentes.map(d => '<option value="' + d.id + '"' + (d.id === atual ? ' selected' : '') + '>' + esc(d.nome) + '</option>').join('');
+
+            $('cat-corpo').innerHTML = '<div class="table-responsive"><table><thead><tr><th>Categoria</th><th>Responsável padrão</th></tr></thead><tbody>' +
+                linhas.map(l =>
+                    '<tr style="cursor:default"><td style="padding-left:' + (16 + l.nivel * 24) + 'px">' +
+                    (l.nivel === 0 ? '<b>' + esc(l.no.nome) + '</b>' : esc(l.no.nome)) + '</td>' +
+                    '<td><select class="form-control" onchange="definirResponsavelPadrao(' + l.no.id + ', this.value)">' + opcoes(l.no.responsavelPadraoId) + '</select></td></tr>'
+                ).join('') + '</tbody></table></div>';
+        } catch (e) { aviso(e.message, 'erro'); }
+    }
+
+    async function definirResponsavelPadrao(id, valor) {
+        try {
+            await enviar('PATCH', '/api/categorias/' + id + '/responsavel-padrao',
+                { responsavelId: valor ? Number(valor) : null });
+            aviso('Responsável da categoria atualizado.');
+        } catch (e) { aviso(e.message, 'erro'); carregarCategoriasAdmin(); }
+    }
+
+    // ---------- Disciplinas (admin) ----------
+    async function carregarDisciplinasAdmin() {
+        try {
+            const [disciplinas, docentes] = await Promise.all([api('/api/disciplinas'), api('/api/docentes')]);
+            const opcoes = atual => '<option value="">— sem docente —</option>' +
+                docentes.map(d => '<option value="' + d.id + '"' + (d.id === atual ? ' selected' : '') + '>' + esc(d.nome) + '</option>').join('');
+
+            $('disc-corpo').innerHTML = disciplinas.length === 0
+                ? '<p class="vazio">Nenhuma disciplina cadastrada.</p>'
+                : '<div class="table-responsive"><table><thead><tr><th>Código</th><th>Disciplina</th><th>Docente</th></tr></thead><tbody>' +
+                disciplinas.map(d =>
+                    '<tr style="cursor:default"><td><b>' + esc(d.codigo) + '</b></td><td>' + esc(d.nome) + '</td>' +
+                    '<td><select class="form-control" onchange="definirDocenteDisciplina(' + d.id + ', this.value)">' + opcoes(d.docenteId) + '</select></td></tr>'
+                ).join('') + '</tbody></table></div>';
+        } catch (e) { aviso(e.message, 'erro'); }
+    }
+
+    async function criarDisciplina() {
+        try {
+            await enviar('POST', '/api/disciplinas', {
+                codigo: val('dc-codigo'),
+                nome: val('dc-nome')
+            });
+            aviso('Disciplina cadastrada com sucesso.');
+            $('dc-codigo').value = '';
+            $('dc-nome').value = '';
+            carregarDisciplinasAdmin();
+        } catch (e) { aviso(e.message, 'erro'); }
+    }
+
+    async function definirDocenteDisciplina(id, valor) {
+        try {
+            await enviar('PATCH', '/api/disciplinas/' + id + '/docente', {
+                docenteId: valor ? Number(valor) : null
+            });
+            aviso('Docente da disciplina atualizado.');
+        } catch (e) { aviso(e.message, 'erro'); carregarDisciplinasAdmin(); }
+    }
+
+    // ---------- Início ----------
+    (async () => {
+        try { await iniciarApp(); } catch (e) { mostrarAuth(); }
+    })();
+</script>
+</body>
+</html>
