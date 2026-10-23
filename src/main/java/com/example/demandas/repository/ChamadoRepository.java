@@ -11,6 +11,8 @@ public interface ChamadoRepository extends JpaRepository<Chamado, Long> {
     List<Chamado> findByResponsavelIdOrderByCriadoEmDesc(Integer responsavelId);
     List<Chamado> findAllByOrderByCriadoEmDesc();
 
+    boolean existsByDisciplinaId(Integer disciplinaId);
+
     @Query("select c.status.nome, count(c) from Chamado c group by c.status.nome")
     List<Object[]> contarPorStatus();
 

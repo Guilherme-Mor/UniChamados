@@ -7,4 +7,7 @@ import java.util.Optional;
 
 public interface CadastroInstitucionalRepository extends JpaRepository<CadastroInstitucional, Integer> {
     Optional<CadastroInstitucional> findByMatriculaAndCpfAndEmailIgnoreCase(String matricula, String cpf, String email);
+    boolean existsByMatricula(String matricula);
+    boolean existsByCpf(String cpf);
+    boolean existsByEmailIgnoreCase(String email);
 }

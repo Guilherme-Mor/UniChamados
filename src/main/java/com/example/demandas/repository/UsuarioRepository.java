@@ -13,6 +13,6 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Integer> {
     boolean existsByCpf(String cpf);
     boolean existsByMatricula(String matricula);
 
-    @Query("select u from Usuario u join u.perfis p where p.nome = :perfil")
+    @Query("select u from Usuario u join u.perfis p where p.nome = :perfil and u.status = 'ATIVO'")
     List<Usuario> findByPerfil(String perfil);
 }

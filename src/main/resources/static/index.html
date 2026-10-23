@@ -22,7 +22,6 @@
             --radius-lg: 16px;
             --radius-md: 10px;
             --radius-sm: 6px;
-
             --ok: #16a34a;
             --erro: #dc2626;
             --aviso: #d97706;
@@ -31,35 +30,24 @@
         * { box-sizing: border-box; }
         body { margin: 0; font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, sans-serif; background: var(--bg-main); color: var(--text-body); }
         .oculto { display: none !important; }
+        .vazio { color: var(--text-muted); text-align: center; padding: 24px; }
+        button:disabled { opacity: .5; cursor: not-allowed; }
 
-        /* ================= TELA DE AUTENTICAÇÃO (SPLIT SCREEN) ================= */
+        /* ================= AUTENTICAÇÃO ================= */
         .auth-container { display: flex; min-height: 100vh; background: #fff; }
         .auth-sidebar {
             width: 42%;
             background: linear-gradient(135deg, #0b3fa8 0%, #1d61f2 100%);
-            color: #fff;
-            padding: 40px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            position: relative;
-            overflow: hidden;
+            color: #fff; padding: 40px; display: flex; flex-direction: column;
+            justify-content: space-between; position: relative; overflow: hidden;
         }
         .auth-brand { display: flex; align-items: center; gap: 12px; font-weight: 700; font-size: 1.25rem; }
-        .auth-brand-logo {
-            background: #fff; color: #0b3fa8; width: 36px; height: 36px;
-            border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 800;
-        }
+        .auth-brand-logo { background: #fff; color: #0b3fa8; width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 800; }
         .auth-hero-title { font-size: 2.2rem; font-weight: 800; line-height: 1.25; margin-bottom: 12px; }
         .auth-hero-desc { color: #dbeafe; font-size: 0.95rem; line-height: 1.5; max-width: 380px; }
-        .auth-hero-circle {
-            position: absolute; bottom: -80px; right: -80px; width: 320px; height: 320px;
-            background: var(--accent-yellow); border-radius: 50%; opacity: 0.9;
-        }
-
+        .auth-hero-circle { position: absolute; bottom: -80px; right: -80px; width: 320px; height: 320px; background: var(--accent-yellow); border-radius: 50%; opacity: 0.9; }
         .auth-content { flex: 1; padding: 40px 60px; display: flex; flex-direction: column; justify-content: center; max-width: 650px; margin: 0 auto; }
 
-        /* Steps indicator (Primeiro Acesso) */
         .auth-steps { display: flex; gap: 12px; margin-bottom: 24px; }
         .step-item { flex: 1; height: 4px; background: #e2e8f0; border-radius: 2px; position: relative; }
         .step-item.active { background: var(--primary); }
@@ -73,121 +61,99 @@
         .form-control {
             width: 100%; padding: 12px 14px; background: var(--input-bg);
             border: 1px solid var(--border-color); border-radius: var(--radius-md);
-            font-size: 0.95rem; color: var(--text-title); transition: all 0.2s;
+            font-size: 0.95rem; color: var(--text-title); transition: all 0.2s; font-family: inherit;
         }
         .form-control:focus { outline: none; border-color: var(--primary); background: #fff; box-shadow: 0 0 0 3px rgba(29, 97, 242, 0.15); }
         select.form-control { cursor: pointer; }
+        textarea.form-control { min-height: 110px; resize: vertical; }
 
         .form-actions { display: flex; align-items: center; justify-content: space-between; margin: 16px 0 24px; font-size: 0.88rem; }
         .form-actions label { display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 0.88rem; color: var(--primary); font-weight: 600; }
         .link-btn { background: none; border: none; color: var(--primary); font-weight: 700; cursor: pointer; padding: 0; font-size: 0.88rem; }
         .link-btn:hover { text-decoration: underline; }
 
-        .btn-primary {
-            width: 100%; background: var(--primary); color: #fff; border: none;
-            padding: 14px; border-radius: var(--radius-md); font-weight: 700; font-size: 0.95rem;
-            cursor: pointer; transition: background 0.2s; margin-bottom: 12px;
-        }
-        .btn-primary:hover { background: var(--primary-hover); }
-        .btn-outline {
-            width: 100%; background: #fff; color: var(--primary); border: 1px solid var(--primary);
-            padding: 14px; border-radius: var(--radius-md); font-weight: 700; font-size: 0.95rem;
-            cursor: pointer; transition: background 0.2s;
-        }
-        .btn-outline:hover { background: #f0f5ff; }
+        .btn-primary { width: 100%; background: var(--primary); color: #fff; border: none; padding: 14px; border-radius: var(--radius-md); font-weight: 700; font-size: 0.95rem; cursor: pointer; transition: background 0.2s; margin-bottom: 12px; font-family: inherit; }
+        .btn-primary:hover:not(:disabled) { background: var(--primary-hover); }
+        .btn-outline { width: 100%; background: #fff; color: var(--primary); border: 1px solid var(--primary); padding: 14px; border-radius: var(--radius-md); font-weight: 700; font-size: 0.95rem; cursor: pointer; transition: background 0.2s; font-family: inherit; }
+        .btn-outline:hover:not(:disabled) { background: #f0f5ff; }
+        .btn-sm { width: auto !important; padding: 10px 18px !important; margin: 0 !important; }
+        .btn-perigo { color: var(--erro) !important; border-color: var(--erro) !important; }
+        .btn-perigo:hover:not(:disabled) { background: #fef2f2 !important; }
 
         .info-box { background: #eff6ff; border-radius: var(--radius-md); padding: 12px 16px; font-size: 0.85rem; color: #1e40af; display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
 
-        /* ================= APP LAYOUT ================= */
+        /* ================= APP ================= */
         .app-layout { display: flex; min-height: 100vh; }
-
-        /* Sidebar Navigation */
         .sidebar { width: 250px; background: var(--sidebar-bg); color: #fff; padding: 24px 16px; display: flex; flex-direction: column; flex-shrink: 0; }
         .sidebar-brand { display: flex; align-items: center; gap: 12px; font-weight: 700; font-size: 1.15rem; padding: 0 12px 32px; }
         .sidebar-brand-logo { background: #fff; color: var(--sidebar-bg); width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 800; }
-
         .nav-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 4px; }
-        .nav-item button {
-            width: 100%; display: flex; align-items: center; gap: 12px; padding: 12px 14px;
-            background: none; border: none; color: #94a3b8; border-radius: var(--radius-md);
-            font-size: 0.92rem; font-weight: 600; cursor: pointer; text-align: left; transition: all 0.2s;
-        }
+        .nav-item button { width: 100%; display: flex; align-items: center; gap: 12px; padding: 12px 14px; background: none; border: none; color: #94a3b8; border-radius: var(--radius-md); font-size: 0.92rem; font-weight: 600; cursor: pointer; text-align: left; transition: all 0.2s; font-family: inherit; }
         .nav-item button:hover { color: #fff; background: rgba(255,255,255,0.05); }
         .nav-item button.ativo { background: var(--sidebar-active); color: #fff; }
 
-        /* App Main Content */
-        .app-main { flex: 1; padding: 32px 40px; overflow-y: auto; display: flex; flex-direction: column; }
-        .app-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px; }
-        .app-title { font-size: 1.6rem; font-weight: 800; color: var(--text-title); margin: 0; display: flex; align-items: center; gap: 8px; }
-        .avatar-btn { width: 40px; height: 40px; border-radius: 50%; background: var(--accent-yellow); color: #000; font-weight: 700; border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.1rem; }
+        .app-main { flex: 1; padding: 32px 40px; overflow-y: auto; display: flex; flex-direction: column; min-width: 0; }
+        .app-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px; gap: 12px; flex-wrap: wrap; }
+        .app-title { font-size: 1.6rem; font-weight: 800; color: var(--text-title); margin: 0; }
+        .avatar-btn { width: 40px; height: 40px; border-radius: 50%; background: var(--accent-yellow); color: #000; font-weight: 700; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0; }
 
-        /* KPI Cards Grid */
         .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px; }
         .kpi-card { background: var(--card-bg); border-radius: var(--radius-lg); padding: 20px; border: 1px solid var(--border-color); box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
         .kpi-number { font-size: 2.2rem; font-weight: 800; color: var(--text-title); line-height: 1; margin-bottom: 6px; }
         .kpi-label { font-size: 0.85rem; font-weight: 600; color: var(--text-muted); }
 
-        /* Callout Box */
-        .callout-box {
-            background: linear-gradient(135deg, #0b3fa8 0%, #1d61f2 100%);
-            border-radius: var(--radius-lg); padding: 24px; color: #fff;
-            display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px;
-        }
+        .callout-box { background: linear-gradient(135deg, #0b3fa8 0%, #1d61f2 100%); border-radius: var(--radius-lg); padding: 24px; color: #fff; display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px; gap: 12px; }
         .callout-title { font-size: 1.15rem; font-weight: 700; margin: 0 0 4px; }
         .callout-desc { font-size: 0.9rem; color: #dbeafe; margin: 0; }
-        .btn-callout {
-            background: var(--accent-yellow); color: #000; border: none;
-            padding: 12px 20px; border-radius: var(--radius-md); font-weight: 700; font-size: 0.9rem;
-            cursor: pointer; transition: background 0.2s; white-space: nowrap;
-        }
+        .btn-callout { background: var(--accent-yellow); color: #000; border: none; padding: 12px 20px; border-radius: var(--radius-md); font-weight: 700; font-size: 0.9rem; cursor: pointer; transition: background 0.2s; white-space: nowrap; font-family: inherit; }
         .btn-callout:hover { background: var(--accent-yellow-hover); }
 
-        /* General Cards */
         .panel-card { background: var(--card-bg); border-radius: var(--radius-lg); border: 1px solid var(--border-color); padding: 24px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
         .panel-title { font-size: 1.1rem; font-weight: 700; color: var(--text-title); margin: 0 0 16px; }
+        .panel-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
 
-        /* Tables */
         .table-responsive { overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; text-align: left; }
-        th { font-size: 0.8rem; font-weight: 700; color: var(--text-muted); text-transform: capitalize; padding: 12px 16px; border-bottom: 1px solid var(--border-color); background: #fafca00; }
-        td { padding: 16px; border-bottom: 1px solid var(--border-color); font-size: 0.9rem; color: var(--text-title); }
+        th { font-size: 0.8rem; font-weight: 700; color: var(--text-muted); padding: 12px 16px; border-bottom: 1px solid var(--border-color); }
+        td { padding: 14px 16px; border-bottom: 1px solid var(--border-color); font-size: 0.9rem; color: var(--text-title); }
         tbody tr { cursor: pointer; transition: background 0.15s; }
         tbody tr:hover { background: #f8fafc; }
+        td .form-control { padding: 9px 12px; }
 
-        /* Badges */
-        .badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 0.78rem; font-weight: 700; }
+        .badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 0.78rem; font-weight: 700; white-space: nowrap; }
         .s-ABERTO { background: #dbeafe; color: #1e40af; }
         .s-ATRIBUIDO { background: #ede9fe; color: #5b21b6; }
         .s-EM_ATENDIMENTO { background: #e0f2fe; color: #0369a1; }
         .s-AGUARDANDO_DISCENTE { background: #fef3c7; color: #92400e; }
-        .s-RESOLVIDO { background: #dcfce7; color: #15803d; }
+        .s-RESOLVIDO, .s-ATIVO { background: #dcfce7; color: #15803d; }
         .s-ENCERRADO { background: #f1f5f9; color: #475569; }
-        .s-CANCELADO { background: #fee2e2; color: #b91c1c; }
+        .s-CANCELADO, .s-INATIVO { background: #fee2e2; color: #b91c1c; }
 
-        /* Custom Two-Column Layout for "Novo Chamado" */
+        /* Filtros e paginação */
+        .filtros { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 12px; }
+        .filtros-acoes { display: flex; gap: 12px; margin-bottom: 20px; }
+        .pager { display: flex; justify-content: space-between; align-items: center; margin-top: 16px; flex-wrap: wrap; gap: 12px; font-size: 0.88rem; color: var(--text-muted); }
+        .pager-ctrl { display: flex; align-items: center; gap: 10px; }
+        .pager select { width: auto; padding: 8px 10px; }
+        .form-linha { display: grid; grid-template-columns: 1fr 1fr 2fr 2fr 1fr; gap: 12px; align-items: end; }
+        @media (max-width: 900px) {
+            .filtros, .form-linha { grid-template-columns: 1fr; }
+            .auth-sidebar { display: none; }
+            .sidebar { width: 200px; }
+            .app-main { padding: 20px; }
+        }
+
         .split-view { display: flex; gap: 32px; }
         .split-sidebar { width: 280px; flex-shrink: 0; }
-        .split-content { flex: 1; }
-
+        .split-content { flex: 1; min-width: 0; }
         .cat-tree-title { font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 12px; text-transform: uppercase; }
-        .cat-tree-item {
-            padding: 10px 14px; border-radius: var(--radius-md); font-weight: 600; font-size: 0.9rem;
-            color: var(--text-body); cursor: pointer; transition: all 0.15s; margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between;
-        }
+        .cat-tree-item { padding: 10px 14px; border-radius: var(--radius-md); font-weight: 600; font-size: 0.9rem; color: var(--text-body); cursor: pointer; transition: all 0.15s; margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between; }
         .cat-tree-item:hover { background: #f1f5f9; }
         .cat-tree-item.active { background: #eff6ff; color: var(--primary); font-weight: 700; }
+        .dropzone { border: 2px dashed #cbd5e1; border-radius: var(--radius-md); padding: 24px; text-align: center; color: var(--text-muted); font-size: 0.88rem; background: var(--input-bg); margin-bottom: 20px; }
 
-        .dropzone {
-            border: 2px dashed #cbd5e1; border-radius: var(--radius-md); padding: 24px;
-            text-align: center; color: var(--text-muted); font-size: 0.88rem; background: var(--input-bg);
-            margin-bottom: 20px; cursor: pointer; transition: border-color 0.2s;
-        }
-        .dropzone:hover { border-color: var(--primary); }
-
-        /* Detalhe Timeline */
         .meta-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; margin: 16px 0; font-size: 0.9rem; }
         .meta-grid span { display: block; color: var(--text-muted); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; margin-bottom: 2px; }
-
         .timeline { list-style: none; margin: 20px 0 0; padding: 0 0 0 16px; border-left: 2px solid var(--border-color); }
         .timeline li { position: relative; margin-bottom: 20px; padding-left: 16px; }
         .timeline li::before { content: ""; position: absolute; left: -23px; top: 4px; width: 12px; height: 12px; border-radius: 50%; background: var(--primary); border: 2px solid #fff; }
@@ -195,7 +161,6 @@
         .tl-tipo { font-weight: 700; color: var(--text-title); }
         .tl-msg { background: var(--input-bg); padding: 12px; border-radius: var(--radius-md); font-size: 0.9rem; white-space: pre-wrap; margin-top: 6px; }
 
-        /* Toast */
         #toast { position: fixed; right: 24px; bottom: 24px; max-width: 360px; padding: 14px 20px; border-radius: var(--radius-md); color: #fff; font-size: 0.9rem; font-weight: 600; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); opacity: 0; transform: translateY(10px); transition: all .25s; pointer-events: none; z-index: 100; }
         #toast.mostra { opacity: 1; transform: translateY(0); }
         #toast.ok { background: var(--ok); }
@@ -206,7 +171,6 @@
 
 <!-- ================= TELA DE AUTENTICAÇÃO ================= -->
 <div id="tela-auth" class="auth-container">
-    <!-- Painel Esquerdo Visual -->
     <div class="auth-sidebar">
         <div class="auth-brand">
             <div class="auth-brand-logo">U</div>
@@ -219,9 +183,8 @@
         <div class="auth-hero-circle"></div>
     </div>
 
-    <!-- Conteúdo do Formulário -->
     <div class="auth-content">
-        <!-- FORMULARIO DE LOGIN -->
+        <!-- LOGIN -->
         <div id="form-login">
             <h2 class="auth-title">Bem-vindo de volta</h2>
             <p class="auth-subtitle">Entre com sua conta institucional.</p>
@@ -233,7 +196,7 @@
 
             <div class="form-group">
                 <label>Senha</label>
-                <input id="l-senha" type="password" class="form-control" placeholder="••••••••••••">
+                <input id="l-senha" type="password" class="form-control" placeholder="••••••••••••" autocomplete="off">
             </div>
 
             <div class="form-actions">
@@ -245,7 +208,7 @@
             <button class="btn-outline" onclick="mostrarTelaAuth('cadastro')">Primeiro acesso</button>
         </div>
 
-        <!-- FORMULARIO DE PRIMEIRA VEZ / CADASTRO -->
+        <!-- CADASTRO -->
         <div id="form-cadastro" class="oculto">
             <div class="auth-steps">
                 <div class="step-item active"><span class="step-label">1 Identificação</span></div>
@@ -274,18 +237,16 @@
 
             <div class="form-group">
                 <label>Senha</label>
-                <input id="c-senha" type="password" class="form-control" placeholder="••••••••">
+                <input id="c-senha" type="password" class="form-control" placeholder="••••••••" autocomplete="new-password">
             </div>
 
-            <div class="info-box">
-                🔒 Mínimo de 8 caracteres, com letras e números.
-            </div>
+            <div class="info-box">🔒 Mínimo de 8 caracteres, com letras e números.</div>
 
             <button class="btn-primary" onclick="cadastrar()">Validar e continuar</button>
             <button class="btn-outline" onclick="mostrarTelaAuth('login')">Voltar ao login</button>
         </div>
 
-        <!-- FORMULARIO DE RECUPERAÇÃO DE SENHA -->
+        <!-- RECUPERAÇÃO -->
         <div id="form-recuperar" class="oculto">
             <button class="link-btn" style="margin-bottom: 16px;" onclick="mostrarTelaAuth('login')">← Voltar ao login</button>
             <h2 class="auth-title">Esqueceu a senha?</h2>
@@ -298,56 +259,39 @@
 
             <button class="btn-primary" onclick="aviso('Link enviado para o seu e-mail!'); mostrarTelaAuth('login');">Enviar link de recuperação</button>
 
-            <div class="info-box" style="margin-top: 16px;">
-                ✉️ Link válido por 30 minutos. Não recebeu? Confira o spam.
-            </div>
+            <div class="info-box" style="margin-top: 16px;">✉️ Link válido por 30 minutos. Não recebeu? Confira o spam.</div>
         </div>
     </div>
 </div>
 
-<!-- ================= APLICAÇÃO PRINCIPAL ================= -->
+<!-- ================= APLICAÇÃO ================= -->
 <div id="tela-app" class="app-layout oculto">
-    <!-- Sidebar Navegação -->
     <aside class="sidebar">
         <div class="sidebar-brand">
             <div class="sidebar-brand-logo">U</div>
             <span>Demandas</span>
         </div>
         <ul class="nav-list">
-            <li class="nav-item">
-                <button id="nav-dashboard" class="ativo" onclick="ir('dashboard')">
-                    📊 Início
-                </button>
-            </li>
-            <li class="nav-item">
-                <button id="nav-novo" onclick="ir('novo')">
-                    ✏️ Abrir chamado
-                </button>
-            </li>
-            <li class="nav-item">
-                <button id="nav-lista" onclick="ir('lista')">
-                    📋 Meus chamados
-                </button>
-            </li>
-            <li class="nav-item">
-                <button id="nav-disciplinas" class="oculto" onclick="ir('disciplinas')">
-                    📚 Disciplinas
-                </button>
-            </li>
+            <li class="nav-item"><button id="nav-dashboard" class="ativo" onclick="ir('dashboard')">📊 Início</button></li>
+            <li class="nav-item"><button id="nav-novo" onclick="ir('novo')">✏️ Abrir chamado</button></li>
+            <li class="nav-item"><button id="nav-lista" onclick="ir('lista')">📋 Meus chamados</button></li>
+            <li class="nav-item"><button id="nav-disciplinas" class="oculto" onclick="ir('disciplinas')">📚 Disciplinas</button></li>
+            <li class="nav-item"><button id="nav-usuarios" class="oculto" onclick="ir('usuarios')">👥 Usuários</button></li>
+            <li class="nav-item"><button id="nav-cadastros" class="oculto" onclick="ir('cadastros')">🪪 Cadastros</button></li>
         </ul>
     </aside>
 
-    <!-- Área de Conteúdo -->
     <main class="app-main">
         <header class="app-header">
-            <h1 id="app-user-greeting" class="app-title">Olá <span id="user-display-name"></span> 👋</h1>
+            <h1 class="app-title">Olá <span id="user-display-name"></span> 👋</h1>
             <div style="display: flex; align-items: center; gap: 12px;">
                 <span id="usuario-info" style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;"></span>
-                <button class="avatar-btn" title="Sair" onclick="sair()">M</button>
+                <div id="avatar" class="avatar-btn" title="Seu perfil">?</div>
+                <button class="btn-outline btn-sm" onclick="sair()">Sair</button>
             </div>
         </header>
 
-        <!-- View: Dashboard -->
+        <!-- Dashboard -->
         <section id="view-dashboard" class="oculto">
             <div id="dash-grade" class="kpi-grid"></div>
 
@@ -360,53 +304,101 @@
             </div>
 
             <div class="panel-card">
-                <h3 class="panel-title">Chamados recentes</h3>
+                <div class="panel-head">
+                    <h3 class="panel-title" style="margin:0;">Últimos 5 chamados</h3>
+                    <button class="link-btn" onclick="ir('lista')">Ver todos →</button>
+                </div>
                 <div class="table-responsive">
                     <table>
-                        <thead>
-                        <tr><th>Protocolo</th><th>Assunto</th><th>Status</th><th>Aberto em</th></tr>
-                        </thead>
+                        <thead><tr><th>Protocolo</th><th>Assunto</th><th>Status</th><th>Aberto em</th></tr></thead>
                         <tbody id="dash-lista-corpo"></tbody>
                     </table>
                 </div>
             </div>
         </section>
 
-        <!-- View: Lista de Chamados -->
+        <!-- Lista com filtros e paginação -->
         <section id="view-lista" class="oculto">
             <div class="panel-card">
                 <h2 id="lista-titulo" class="panel-title">Chamados</h2>
+
+                <div class="filtros">
+                    <div class="form-group">
+                        <label>Busca</label>
+                        <input id="f-busca" class="form-control" placeholder="Protocolo, título, categoria, disciplina, pessoa..."
+                               onkeydown="if (event.key === 'Enter') aplicarFiltros()">
+                    </div>
+                    <div class="form-group">
+                        <label>Status</label>
+                        <select id="f-status" class="form-control">
+                            <option value="">Todos</option>
+                            <option value="ABERTO">ABERTO</option>
+                            <option value="ATRIBUIDO">ATRIBUIDO</option>
+                            <option value="EM_ATENDIMENTO">EM ATENDIMENTO</option>
+                            <option value="AGUARDANDO_DISCENTE">AGUARDANDO DISCENTE</option>
+                            <option value="RESOLVIDO">RESOLVIDO</option>
+                            <option value="ENCERRADO">ENCERRADO</option>
+                            <option value="CANCELADO">CANCELADO</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Aberto de</label>
+                        <input id="f-de" type="date" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label>Aberto até</label>
+                        <input id="f-ate" type="date" class="form-control">
+                    </div>
+                </div>
+                <div class="filtros-acoes">
+                    <button class="btn-primary btn-sm" onclick="aplicarFiltros()">Filtrar</button>
+                    <button class="btn-outline btn-sm" onclick="limparFiltros()">Limpar</button>
+                </div>
+
                 <div class="table-responsive">
                     <table>
                         <thead>
-                        <tr><th>Protocolo</th><th>Título</th><th>Categoria</th><th>Status</th><th>Solicitante</th><th>Responsável</th><th>Aberto em</th></tr>
+                        <tr><th>Protocolo</th><th>Título</th><th>Categoria</th><th>Disciplina</th><th>Status</th><th>Solicitante</th><th>Responsável</th><th>Aberto em</th></tr>
                         </thead>
                         <tbody id="lista-corpo"></tbody>
                     </table>
                 </div>
+
+                <div class="pager">
+                    <div class="pager-ctrl">
+                        <span>Por página</span>
+                        <select id="f-tamanho" class="form-control" onchange="carregarLista(0)">
+                            <option value="5">5</option>
+                            <option value="10" selected>10</option>
+                            <option value="20">20</option>
+                            <option value="50">50</option>
+                        </select>
+                    </div>
+                    <span id="pager-info"></span>
+                    <div class="pager-ctrl">
+                        <button id="btn-ant" class="btn-outline btn-sm" onclick="mudarPagina(-1)">← Anterior</button>
+                        <button id="btn-prox" class="btn-outline btn-sm" onclick="mudarPagina(1)">Próxima →</button>
+                    </div>
+                </div>
             </div>
         </section>
 
-        <!-- View: Novo Chamado (Modern Split Layout) -->
+        <!-- Novo chamado -->
         <section id="view-novo" class="oculto">
             <div class="panel-card">
                 <div class="split-view">
-                    <!-- Categorias à Esquerda -->
                     <div class="split-sidebar">
                         <div class="cat-tree-title">1 · Escolha a demanda</div>
                         <div id="cat-tree-container"></div>
                     </div>
 
-                    <!-- Formulário à Direita -->
                     <div class="split-content">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
                             <h2 class="panel-title" style="margin:0;">Novo chamado</h2>
                             <span class="badge s-ABERTO" style="background:#e0f2fe; color:#0284c7;">Prazo estimado: 72h</span>
                         </div>
 
-                        <div id="selected-cat-path" class="info-box" style="margin-bottom: 20px; font-weight: 700;">
-                            Selecione uma categoria
-                        </div>
+                        <div id="selected-cat-path" class="info-box" style="margin-bottom: 20px; font-weight: 700;">Selecione uma categoria</div>
 
                         <div class="form-group">
                             <label>Categoria</label>
@@ -429,44 +421,89 @@
                         </div>
 
                         <div class="dropzone">
-                            📎 Arraste arquivos aqui ou <span style="color:var(--primary); font-weight:700;">selecione</span>
-                            <div style="font-size: 0.75rem; margin-top: 4px;">PDF, JPG ou PNG · até 10 MB</div>
+                            📎 Anexos
+                            <div style="font-size: 0.75rem; margin-top: 4px;">Em breve</div>
                         </div>
 
                         <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px;">
-                            <button class="btn-outline" style="width: auto; padding: 10px 24px;" onclick="ir('lista')">Cancelar</button>
-                            <button class="btn-primary" style="width: auto; padding: 10px 24px; margin: 0;" onclick="abrirChamado()">Enviar chamado</button>
+                            <button class="btn-outline btn-sm" onclick="ir('lista')">Cancelar</button>
+                            <button class="btn-primary btn-sm" onclick="abrirChamado()">Enviar chamado</button>
                         </div>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- View: Disciplinas (Admin) -->
+        <!-- Disciplinas (admin) -->
         <section id="view-disciplinas" class="oculto">
             <div class="panel-card">
                 <h2 class="panel-title">Nova disciplina</h2>
                 <div style="display: flex; gap: 16px; margin-bottom: 16px;">
-                    <div class="form-group" style="flex:1;">
+                    <div class="form-group" style="flex:1; margin:0;">
                         <label>Código</label>
                         <input id="dc-codigo" class="form-control" maxlength="20" placeholder="Ex: MAT01">
                     </div>
-                    <div class="form-group" style="flex:2;">
+                    <div class="form-group" style="flex:2; margin:0;">
                         <label>Nome</label>
                         <input id="dc-nome" class="form-control" maxlength="150" placeholder="Ex: Cálculo II">
                     </div>
                 </div>
-                <button class="btn-primary" style="width:auto; padding: 10px 20px;" onclick="criarDisciplina()">Adicionar disciplina</button>
+                <button class="btn-primary btn-sm" onclick="criarDisciplina()">Adicionar disciplina</button>
             </div>
 
             <div class="panel-card">
-                <h2 class="panel-title">Docente por disciplina</h2>
-                <p class="auth-subtitle">Chamados de categorias que exigem disciplina são atribuídos ao docente escolhido aqui.</p>
+                <h2 class="panel-title">Disciplinas e docentes</h2>
+                <p class="auth-subtitle" style="margin-bottom:16px;">Edite código, nome e docente e clique em Salvar. Trocar o docente vale só para chamados novos.</p>
                 <div id="disc-corpo"></div>
             </div>
         </section>
 
-        <!-- View: Detalhe do Chamado -->
+        <!-- Usuários (admin) -->
+        <section id="view-usuarios" class="oculto">
+            <div class="panel-card">
+                <h2 class="panel-title">Usuários</h2>
+                <p class="auth-subtitle" style="margin-bottom:16px;">Usuários desativados não conseguem entrar no sistema.</p>
+                <div class="table-responsive">
+                    <table>
+                        <thead><tr><th>Nome</th><th>E-mail</th><th>Matrícula</th><th>Perfil</th><th>Status</th><th></th></tr></thead>
+                        <tbody id="usuarios-corpo"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Cadastros institucionais (admin) -->
+        <section id="view-cadastros" class="oculto">
+            <div class="panel-card">
+                <h2 class="panel-title">Novo cadastro institucional</h2>
+                <p class="auth-subtitle" style="margin-bottom:16px;">Só quem está nesta base consegue criar acesso no primeiro acesso.</p>
+                <div class="form-linha">
+                    <div class="form-group" style="margin:0;"><label>Matrícula</label><input id="ci-matricula" class="form-control" maxlength="20"></div>
+                    <div class="form-group" style="margin:0;"><label>CPF</label><input id="ci-cpf" class="form-control" placeholder="000.000.000-00"></div>
+                    <div class="form-group" style="margin:0;"><label>Nome</label><input id="ci-nome" class="form-control" maxlength="150"></div>
+                    <div class="form-group" style="margin:0;"><label>E-mail institucional</label><input id="ci-email" class="form-control" maxlength="150"></div>
+                    <div class="form-group" style="margin:0;"><label>Tipo</label>
+                        <select id="ci-tipo" class="form-control">
+                            <option value="DISCENTE">DISCENTE</option>
+                            <option value="DOCENTE">DOCENTE</option>
+                        </select>
+                    </div>
+                </div>
+                <button class="btn-primary btn-sm" style="margin-top:16px !important;" onclick="criarCadastro()">Adicionar cadastro</button>
+            </div>
+
+            <div class="panel-card">
+                <h2 class="panel-title">Base de cadastros</h2>
+                <div class="table-responsive">
+                    <table>
+                        <thead><tr><th>Matrícula</th><th>CPF</th><th>Nome</th><th>E-mail</th><th>Tipo</th><th>Acesso</th></tr></thead>
+                        <tbody id="cadastros-corpo"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Detalhe -->
         <section id="view-detalhe" class="oculto"></section>
     </main>
 </div>
@@ -475,11 +512,13 @@
 
 <script>
     // ---------- Utilitários ----------
-    const STATUS = ['ABERTO','ATRIBUIDO','EM_ATENDIMENTO','AGUARDANDO_DISCENTE','RESOLVIDO','ENCERRADO','CANCELADO'];
     const STATUS_EDITAVEIS = ['ATRIBUIDO','EM_ATENDIMENTO','AGUARDANDO_DISCENTE','RESOLVIDO','ENCERRADO','CANCELADO'];
     const FINAIS = ['ENCERRADO','CANCELADO'];
+    const VIEWS = ['dashboard','lista','novo','disciplinas','usuarios','cadastros','detalhe'];
+    const NAVS = ['dashboard','lista','novo','disciplinas','usuarios','cadastros'];
     let eu = null;
     let chamadoAbertoId = null;
+    let listaPagina = 0;
     let toastTimer = null;
 
     const $ = id => document.getElementById(id);
@@ -507,7 +546,7 @@
         return m ? decodeURIComponent(m[1]) : null;
     }
 
-    // Se não houver cookie de CSRF (primeiro acesso ou após logout), faz uma leitura simples para o servidor emitir um
+    // Se não houver cookie de CSRF, faz uma leitura simples para o servidor emitir um
     async function garantirCsrf() {
         if (!lerCookie('XSRF-TOKEN')) {
             try { await fetch('/api/me'); } catch (e) {}
@@ -539,7 +578,7 @@
         method: metodo, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(obj)
     });
 
-    // ---------- Acesso (Telas & Alternância Layout Protótipo) ----------
+    // ---------- Acesso ----------
     function mostrarTelaAuth(qual) {
         $('form-login').classList.toggle('oculto', qual !== 'login');
         $('form-cadastro').classList.toggle('oculto', qual !== 'cadastro');
@@ -588,7 +627,8 @@
     function mostrarAuth() {
         $('tela-app').classList.add('oculto');
         $('tela-auth').classList.remove('oculto');
-        ['l-email', 'l-senha', 'c-matricula', 'c-cpf', 'c-email', 'c-senha'].forEach(id => $(id).value = '');
+        ['l-email','l-senha','c-matricula','c-cpf','c-email','c-senha','f-busca','f-status','f-de','f-ate']
+            .forEach(id => $(id).value = '');
         mostrarTelaAuth('login');
     }
 
@@ -596,10 +636,11 @@
         eu = await api('/api/me');
         const primeiroNome = eu.nome ? eu.nome.split(' ')[0] : '';
         $('user-display-name').textContent = primeiroNome;
+        $('avatar').textContent = (eu.nome || '?').trim().charAt(0).toUpperCase();
         $('usuario-info').textContent = eu.nome + ' · ' + eu.perfis.join(', ');
 
         $('nav-novo').classList.toggle('oculto', !temPerfil('DISCENTE'));
-        $('nav-disciplinas').classList.toggle('oculto', !temPerfil('ADMIN'));
+        ['disciplinas','usuarios','cadastros'].forEach(n => $('nav-' + n).classList.toggle('oculto', !temPerfil('ADMIN')));
 
         $('tela-auth').classList.add('oculto');
         $('tela-app').classList.remove('oculto');
@@ -608,45 +649,35 @@
 
     // ---------- Navegação ----------
     function ir(nome) {
-        ['dashboard','lista','novo','disciplinas','detalhe'].forEach(v => $('view-' + v).classList.add('oculto'));
+        VIEWS.forEach(v => $('view-' + v).classList.add('oculto'));
         $('view-' + nome).classList.remove('oculto');
-        ['dashboard','lista','novo','disciplinas'].forEach(v => {
-            const btn = $('nav-' + v);
-            if (btn) btn.classList.toggle('ativo', v === nome);
-        });
+        NAVS.forEach(v => $('nav-' + v).classList.toggle('ativo', v === nome));
+
         if (nome === 'dashboard') carregarDashboard();
-        if (nome === 'lista') carregarLista();
+        if (nome === 'lista') carregarLista(0);
         if (nome === 'novo') carregarCategorias();
         if (nome === 'disciplinas') carregarDisciplinasAdmin();
+        if (nome === 'usuarios') carregarUsuarios();
+        if (nome === 'cadastros') carregarCadastros();
     }
 
     // ---------- Dashboard ----------
     async function carregarDashboard() {
         try {
-            const [itens, lista] = await Promise.all([api('/api/dashboard'), api('/api/chamados')]);
+            const [itens, pagina] = await Promise.all([
+                api('/api/dashboard'),
+                api('/api/chamados?pagina=0&tamanho=5')
+            ]);
             const mapa = {};
             itens.forEach(i => mapa[i.status] = i.quantidade);
 
             $('dash-grade').innerHTML = `
-                <div class="kpi-card">
-                    <div class="kpi-number">${mapa['ABERTO'] || 0}</div>
-                    <div class="kpi-label">Abertos</div>
-                </div>
-                <div class="kpi-card">
-                    <div class="kpi-number">${mapa['AGUARDANDO_DISCENTE'] || 0}</div>
-                    <div class="kpi-label">Aguardando você</div>
-                </div>
-                <div class="kpi-card">
-                    <div class="kpi-number">${mapa['EM_ATENDIMENTO'] || 0}</div>
-                    <div class="kpi-label">Em atendimento</div>
-                </div>
-                <div class="kpi-card">
-                    <div class="kpi-number">${mapa['RESOLVIDO'] || 0}</div>
-                    <div class="kpi-label">Resolvidos</div>
-                </div>
-            `;
+                <div class="kpi-card"><div class="kpi-number">${mapa['ABERTO'] || 0}</div><div class="kpi-label">Abertos</div></div>
+                <div class="kpi-card"><div class="kpi-number">${mapa['AGUARDANDO_DISCENTE'] || 0}</div><div class="kpi-label">Aguardando você</div></div>
+                <div class="kpi-card"><div class="kpi-number">${mapa['EM_ATENDIMENTO'] || 0}</div><div class="kpi-label">Em atendimento</div></div>
+                <div class="kpi-card"><div class="kpi-number">${mapa['RESOLVIDO'] || 0}</div><div class="kpi-label">Resolvidos</div></div>`;
 
-            const ultimos = lista.slice(0, 5);
+            const ultimos = pagina.conteudo;
             $('dash-lista-corpo').innerHTML = ultimos.length === 0
                 ? '<tr><td colspan="4" class="vazio">Nenhum chamado recente.</td></tr>'
                 : ultimos.map(c => `
@@ -655,31 +686,52 @@
                         <td>${esc(c.titulo)}</td>
                         <td>${badge(c.status)}</td>
                         <td>${data(c.criadoEm)}</td>
-                    </tr>
-                `).join('');
+                    </tr>`).join('');
         } catch (e) { aviso(e.message, 'erro'); }
     }
 
-    // ---------- Lista ----------
-    async function carregarLista() {
+    // ---------- Lista com filtros e paginação ----------
+    async function carregarLista(pagina) {
+        if (typeof pagina === 'number') listaPagina = pagina;
         $('lista-titulo').textContent = temPerfil('ADMIN') ? 'Todos os chamados'
             : temPerfil('DOCENTE') ? 'Chamados atribuídos a mim' : 'Meus chamados';
+
+        const params = new URLSearchParams({ pagina: listaPagina, tamanho: val('f-tamanho') });
+        if (val('f-busca').trim()) params.set('busca', val('f-busca').trim());
+        if (val('f-status')) params.set('status', val('f-status'));
+        if (val('f-de')) params.set('de', val('f-de'));
+        if (val('f-ate')) params.set('ate', val('f-ate'));
+
         try {
-            const lista = await api('/api/chamados');
-            $('lista-corpo').innerHTML = lista.length === 0
-                ? '<tr><td colspan="7" class="vazio">Nenhum chamado encontrado.</td></tr>'
-                : lista.map(c => `
-          <tr onclick="abrirDetalhe(${c.id})">
-            <td><b>${esc(c.protocolo)}</b></td>
-            <td>${esc(c.titulo)}</td>
-            <td>${esc(c.categoria)}</td>
-            <td>${badge(c.status)}</td>
-            <td>${esc(c.solicitante)}</td>
-            <td>${esc(c.responsavel || '—')}</td>
-            <td>${data(c.criadoEm)}</td>
-          </tr>`).join('');
+            const r = await api('/api/chamados?' + params.toString());
+            listaPagina = r.pagina;
+
+            $('lista-corpo').innerHTML = r.conteudo.length === 0
+                ? '<tr><td colspan="8" class="vazio">Nenhum chamado encontrado.</td></tr>'
+                : r.conteudo.map(c => `
+                    <tr onclick="abrirDetalhe(${c.id})">
+                        <td><b>${esc(c.protocolo)}</b></td>
+                        <td>${esc(c.titulo)}</td>
+                        <td>${esc(c.categoria)}</td>
+                        <td>${esc(c.disciplina || '—')}</td>
+                        <td>${badge(c.status)}</td>
+                        <td>${esc(c.solicitante)}</td>
+                        <td>${esc(c.responsavel || '—')}</td>
+                        <td>${data(c.criadoEm)}</td>
+                    </tr>`).join('');
+
+            $('pager-info').textContent = r.total + ' chamado(s) · página ' + (r.pagina + 1) + ' de ' + r.totalPaginas;
+            $('btn-ant').disabled = r.pagina <= 0;
+            $('btn-prox').disabled = r.pagina >= r.totalPaginas - 1;
         } catch (e) { aviso(e.message, 'erro'); }
     }
+
+    function aplicarFiltros() { carregarLista(0); }
+    function limparFiltros() {
+        ['f-busca','f-status','f-de','f-ate'].forEach(id => $(id).value = '');
+        carregarLista(0);
+    }
+    function mudarPagina(delta) { carregarLista(listaPagina + delta); }
 
     // ---------- Novo chamado ----------
     let catExige = {};
@@ -703,7 +755,6 @@
                 });
             })(arvore, '');
 
-            // Renderizar Árvore Esquerda (Protótipo Image 05)
             arvore.forEach(cat => {
                 const item = document.createElement('div');
                 item.className = 'cat-tree-item';
@@ -711,7 +762,7 @@
                 item.onclick = () => {
                     document.querySelectorAll('.cat-tree-item').forEach(e => e.classList.remove('active'));
                     item.classList.add('active');
-                    if(cat.filhos.length > 0 && cat.filhos[0].filhos.length === 0) {
+                    if (cat.filhos.length > 0 && cat.filhos[0].filhos.length === 0) {
                         sel.value = cat.filhos[0].id;
                     }
                     aoMudarCategoria();
@@ -727,14 +778,8 @@
     }
 
     function aoMudarCategoria() {
-        const selectedOption = $('n-categoria').options[$('n-categoria').selectedIndex];
-        if (selectedOption) {
-            $('selected-cat-path').textContent = selectedOption.text;
-        }
-        atualizarDisciplina();
-    }
-
-    function atualizarDisciplina() {
+        const opt = $('n-categoria').options[$('n-categoria').selectedIndex];
+        if (opt) $('selected-cat-path').textContent = opt.text;
         $('n-disc-wrap').classList.toggle('oculto', !catExige[Number(val('n-categoria'))]);
     }
 
@@ -762,7 +807,7 @@
                 docentes = await api('/api/docentes');
             }
             renderDetalhe(c, docentes);
-            ['dashboard','lista','novo','disciplinas'].forEach(v => $('view-' + v).classList.add('oculto'));
+            VIEWS.forEach(v => $('view-' + v).classList.add('oculto'));
             $('view-detalhe').classList.remove('oculto');
         } catch (e) { aviso(e.message, 'erro'); }
     }
@@ -900,21 +945,23 @@
 
             $('disc-corpo').innerHTML = disciplinas.length === 0
                 ? '<p class="vazio">Nenhuma disciplina cadastrada.</p>'
-                : '<div class="table-responsive"><table><thead><tr><th>Código</th><th>Disciplina</th><th>Docente</th><th></th></tr></thead><tbody>' +
-                disciplinas.map(d =>
-                    '<tr style="cursor:default"><td><b>' + esc(d.codigo) + '</b></td><td>' + esc(d.nome) + '</td>' +
-                    '<td><select id="disc-doc-' + d.id + '" class="form-control">' + opcoes(d.docenteId) + '</select></td>' +
-                    '<td><button class="btn-primary" style="width:auto; padding:10px 18px; margin:0;" onclick="salvarDocenteDisciplina(' + d.id + ')">Salvar</button></td></tr>'
-                ).join('') + '</tbody></table></div>';
+                : '<div class="table-responsive"><table><thead><tr><th>Código</th><th>Nome</th><th>Docente</th><th></th></tr></thead><tbody>' +
+                disciplinas.map(d => `
+                    <tr style="cursor:default">
+                        <td style="width:140px;"><input id="disc-cod-${d.id}" class="form-control" maxlength="20" value="${esc(d.codigo)}"></td>
+                        <td><input id="disc-nome-${d.id}" class="form-control" maxlength="150" value="${esc(d.nome)}"></td>
+                        <td><select id="disc-doc-${d.id}" class="form-control">${opcoes(d.docenteId)}</select></td>
+                        <td style="white-space:nowrap;">
+                            <button class="btn-primary btn-sm" onclick="salvarDisciplina(${d.id})">Salvar</button>
+                            <button class="btn-outline btn-sm btn-perigo" onclick="removerDisciplina(${d.id})">Remover</button>
+                        </td>
+                    </tr>`).join('') + '</tbody></table></div>';
         } catch (e) { aviso(e.message, 'erro'); }
     }
 
     async function criarDisciplina() {
         try {
-            await enviar('POST', '/api/disciplinas', {
-                codigo: val('dc-codigo'),
-                nome: val('dc-nome')
-            });
+            await enviar('POST', '/api/disciplinas', { codigo: val('dc-codigo'), nome: val('dc-nome') });
             aviso('Disciplina cadastrada com sucesso.');
             $('dc-codigo').value = '';
             $('dc-nome').value = '';
@@ -922,14 +969,94 @@
         } catch (e) { aviso(e.message, 'erro'); }
     }
 
-    async function salvarDocenteDisciplina(id) {
-        const valor = $('disc-doc-' + id).value;
+    async function salvarDisciplina(id) {
+        const docente = val('disc-doc-' + id);
         try {
-            await enviar('PATCH', '/api/disciplinas/' + id + '/docente', {
-                docenteId: valor ? Number(valor) : null
+            await enviar('PUT', '/api/disciplinas/' + id, {
+                codigo: val('disc-cod-' + id),
+                nome: val('disc-nome-' + id),
+                docenteId: docente ? Number(docente) : null
             });
-            aviso('Docente da disciplina salvo.');
+            aviso('Disciplina salva.');
             carregarDisciplinasAdmin();
+        } catch (e) { aviso(e.message, 'erro'); }
+    }
+
+    async function removerDisciplina(id) {
+        const nome = val('disc-nome-' + id);
+        if (!confirm('Remover a disciplina "' + nome + '"?')) return;
+        try {
+            const r = await api('/api/disciplinas/' + id, { method: 'DELETE' });
+            aviso(r.mensagem);
+            carregarDisciplinasAdmin();
+        } catch (e) { aviso(e.message, 'erro'); }
+    }
+
+    // ---------- Usuários (admin) ----------
+    async function carregarUsuarios() {
+        try {
+            const lista = await api('/api/usuarios');
+            $('usuarios-corpo').innerHTML = lista.length === 0
+                ? '<tr><td colspan="6" class="vazio">Nenhum usuário.</td></tr>'
+                : lista.map(u => {
+                    const ativo = u.status === 'ATIVO';
+                    const proprio = eu && u.email.toLowerCase() === eu.email.toLowerCase();
+                    const acao = proprio
+                        ? '<span style="color:var(--text-muted); font-size:0.85rem;">Você</span>'
+                        : `<button class="${ativo ? 'btn-outline btn-perigo' : 'btn-primary'} btn-sm" onclick="alterarAcesso(${u.id}, ${!ativo}, '${esc(u.nome).replaceAll("'", '')}')">${ativo ? 'Desativar' : 'Ativar'}</button>`;
+                    return `<tr style="cursor:default">
+                        <td>${esc(u.nome)}</td>
+                        <td>${esc(u.email)}</td>
+                        <td>${esc(u.matricula)}</td>
+                        <td>${esc(u.perfis.join(', '))}</td>
+                        <td>${badge(u.status)}</td>
+                        <td>${acao}</td>
+                    </tr>`;
+                }).join('');
+        } catch (e) { aviso(e.message, 'erro'); }
+    }
+
+    async function alterarAcesso(id, ativo, nome) {
+        if (!ativo && !confirm('Desativar o acesso de ' + nome + '?')) return;
+        try {
+            await enviar('PATCH', '/api/usuarios/' + id + '/status', { ativo: ativo });
+            aviso(ativo ? 'Acesso ativado.' : 'Acesso desativado.');
+            carregarUsuarios();
+        } catch (e) { aviso(e.message, 'erro'); }
+    }
+
+    // ---------- Cadastros institucionais (admin) ----------
+    async function carregarCadastros() {
+        try {
+            const lista = await api('/api/cadastros-institucionais');
+            $('cadastros-corpo').innerHTML = lista.length === 0
+                ? '<tr><td colspan="6" class="vazio">Nenhum cadastro.</td></tr>'
+                : lista.map(c => `
+                    <tr style="cursor:default">
+                        <td>${esc(c.matricula)}</td>
+                        <td>${esc(c.cpf)}</td>
+                        <td>${esc(c.nome)}</td>
+                        <td>${esc(c.email)}</td>
+                        <td>${esc(c.tipo)}</td>
+                        <td>${c.acessoCriado
+                    ? '<span class="badge s-RESOLVIDO">Acesso criado</span>'
+                    : '<span class="badge s-ABERTO">Pendente</span>'}</td>
+                    </tr>`).join('');
+        } catch (e) { aviso(e.message, 'erro'); }
+    }
+
+    async function criarCadastro() {
+        try {
+            await enviar('POST', '/api/cadastros-institucionais', {
+                matricula: val('ci-matricula'),
+                cpf: val('ci-cpf'),
+                nome: val('ci-nome'),
+                email: val('ci-email'),
+                tipo: val('ci-tipo')
+            });
+            ['ci-matricula','ci-cpf','ci-nome','ci-email'].forEach(id => $(id).value = '');
+            aviso('Cadastro adicionado. A pessoa já pode fazer o primeiro acesso.');
+            carregarCadastros();
         } catch (e) { aviso(e.message, 'erro'); }
     }
 

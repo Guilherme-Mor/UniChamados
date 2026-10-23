@@ -8,4 +8,5 @@ import java.util.List;
 public interface DisciplinaRepository extends JpaRepository<Disciplina, Integer> {
     List<Disciplina> findByAtivoTrueOrderByNomeAsc();
     boolean existsByCodigoIgnoreCase(String codigo);
+    boolean existsByCodigoIgnoreCaseAndIdNot(String codigo, Integer id);
 }
