@@ -1,5 +1,6 @@
--- Remove a tabela de teste da V1
-DROP TABLE teste_conexao;
+-- =====================================================================
+-- Schema inicial consolidado - Central de Demandas
+-- =====================================================================
 
 -- ===== Perfis e status =====
 CREATE TABLE perfil (
@@ -9,19 +10,19 @@ CREATE TABLE perfil (
 
 CREATE TABLE status_chamado (
                                 id        INT IDENTITY(1,1) PRIMARY KEY,
-                                nome      VARCHAR(30)  NOT NULL UNIQUE,
+                                nome      VARCHAR(30)   NOT NULL UNIQUE,
                                 descricao NVARCHAR(200) NULL,
-                                ordem     INT NOT NULL
+                                ordem     INT           NOT NULL
 );
 
--- ===== Cadastro institucional (base de referência) =====
+-- ===== Cadastro institucional (base de referência do primeiro acesso) =====
 CREATE TABLE cadastro_institucional (
                                         id        INT IDENTITY(1,1) PRIMARY KEY,
                                         matricula VARCHAR(20)   NOT NULL UNIQUE,
                                         cpf       VARCHAR(11)   NOT NULL UNIQUE,
                                         nome      NVARCHAR(150) NOT NULL,
                                         email     VARCHAR(150)  NOT NULL UNIQUE,
-                                        tipo      VARCHAR(20)   NOT NULL,   -- DISCENTE ou DOCENTE
+                                        tipo      VARCHAR(20)   NOT NULL,                 -- DISCENTE ou DOCENTE
                                         status    VARCHAR(20)   NOT NULL DEFAULT 'ATIVO'
 );
 
@@ -45,15 +46,26 @@ CREATE TABLE usuario_perfil (
                                 CONSTRAINT fk_up_perfil  FOREIGN KEY (perfil_id)  REFERENCES perfil(id)
 );
 
+-- ===== Disciplinas (o docente da disciplina recebe os chamados dela) =====
+CREATE TABLE disciplina (
+                            id         INT IDENTITY(1,1) PRIMARY KEY,
+                            codigo     VARCHAR(20)   NOT NULL UNIQUE,
+                            nome       NVARCHAR(150) NOT NULL,
+                            docente_id INT NULL,
+                            ativo      BIT NOT NULL DEFAULT 1,
+                            CONSTRAINT fk_disciplina_docente FOREIGN KEY (docente_id) REFERENCES usuario(id)
+);
+
 -- ===== Categorias (árvore) =====
 CREATE TABLE categoria (
                            id               INT IDENTITY(1,1) PRIMARY KEY,
                            nome             NVARCHAR(100) NOT NULL,
                            descricao        NVARCHAR(300) NULL,
                            categoria_pai_id INT NULL,
-                           prazo_horas      INT NULL,          -- usado no SLA (fase futura)
+                           prazo_horas      INT NULL,                  -- usado no SLA (fase futura)
                            ativo            BIT NOT NULL DEFAULT 1,
                            ordem            INT NOT NULL DEFAULT 0,
+                           exige_disciplina BIT NOT NULL DEFAULT 0,
                            CONSTRAINT fk_categoria_pai FOREIGN KEY (categoria_pai_id) REFERENCES categoria(id)
 );
 
@@ -67,6 +79,7 @@ CREATE TABLE chamado (
                          categoria_id   INT           NOT NULL,
                          status_id      INT           NOT NULL,
                          responsavel_id INT           NULL,
+                         disciplina_id  INT           NULL,
                          titulo         NVARCHAR(150) NOT NULL,
                          descricao      NVARCHAR(MAX) NOT NULL,
                          prioridade     VARCHAR(10)   NOT NULL DEFAULT 'NORMAL',
@@ -76,7 +89,8 @@ CREATE TABLE chamado (
                          CONSTRAINT fk_chamado_usuario     FOREIGN KEY (usuario_id)     REFERENCES usuario(id),
                          CONSTRAINT fk_chamado_categoria   FOREIGN KEY (categoria_id)   REFERENCES categoria(id),
                          CONSTRAINT fk_chamado_status      FOREIGN KEY (status_id)      REFERENCES status_chamado(id),
-                         CONSTRAINT fk_chamado_responsavel FOREIGN KEY (responsavel_id) REFERENCES usuario(id)
+                         CONSTRAINT fk_chamado_responsavel FOREIGN KEY (responsavel_id) REFERENCES usuario(id),
+                         CONSTRAINT fk_chamado_disciplina  FOREIGN KEY (disciplina_id)  REFERENCES disciplina(id)
 );
 
 CREATE INDEX ix_chamado_usuario     ON chamado(usuario_id);
@@ -89,7 +103,7 @@ CREATE TABLE interacao (
                            chamado_id BIGINT        NOT NULL,
                            usuario_id INT           NOT NULL,
                            canal      VARCHAR(20)   NOT NULL DEFAULT 'PORTAL',   -- TELEGRAM entra depois
-                           tipo       VARCHAR(30)   NOT NULL,   -- MENSAGEM, MUDANCA_STATUS, ATRIBUICAO
+                           tipo       VARCHAR(30)   NOT NULL,   -- ABERTURA, MENSAGEM, MUDANCA_STATUS, ATRIBUICAO
                            mensagem   NVARCHAR(MAX) NULL,
                            criado_em  DATETIME2     NOT NULL DEFAULT SYSDATETIME(),
                            CONSTRAINT fk_interacao_chamado FOREIGN KEY (chamado_id) REFERENCES chamado(id),
@@ -98,7 +112,9 @@ CREATE TABLE interacao (
 
 CREATE INDEX ix_interacao_chamado ON interacao(chamado_id);
 
--- ===== Dados iniciais =====
+-- =====================================================================
+-- Dados essenciais (necessários para o sistema funcionar)
+-- =====================================================================
 INSERT INTO perfil (nome) VALUES ('DISCENTE'), ('DOCENTE'), ('ADMIN');
 
 INSERT INTO status_chamado (nome, descricao, ordem) VALUES
@@ -110,28 +126,36 @@ INSERT INTO status_chamado (nome, descricao, ordem) VALUES
                                                         ('ENCERRADO',           N'Atendimento finalizado', 6),
                                                         ('CANCELADO',           N'Chamado cancelado com justificativa', 7);
 
--- Categorias raiz
-INSERT INTO categoria (nome, descricao, prazo_horas, ordem) VALUES
-                                                                (N'Nota',       N'Demandas sobre notas', 72, 1),
-                                                                (N'Frequência', N'Demandas sobre faltas e presença', 72, 2),
-                                                                (N'Documentos', N'Declarações e histórico', 120, 3),
-                                                                (N'Outros',     N'Demandas não contempladas', 120, 4);
+-- Categorias raiz (Nota e Frequência exigem disciplina)
+INSERT INTO categoria (nome, descricao, prazo_horas, ordem, exige_disciplina) VALUES
+                                                                                  (N'Nota',       N'Demandas sobre notas', 72, 1, 1),
+                                                                                  (N'Frequência', N'Demandas sobre faltas e presença', 72, 2, 1),
+                                                                                  (N'Documentos', N'Declarações e histórico', 120, 3, 0),
+                                                                                  (N'Outros',     N'Demandas não contempladas', 120, 4, 0);
 
 -- Subcategorias
-INSERT INTO categoria (nome, categoria_pai_id, prazo_horas, ordem)
-SELECT N'Revisão de nota', id, 72, 1 FROM categoria WHERE nome = N'Nota' AND categoria_pai_id IS NULL;
-INSERT INTO categoria (nome, categoria_pai_id, prazo_horas, ordem)
-SELECT N'Nota não lançada', id, 48, 2 FROM categoria WHERE nome = N'Nota' AND categoria_pai_id IS NULL;
-INSERT INTO categoria (nome, categoria_pai_id, prazo_horas, ordem)
-SELECT N'Justificativa de falta', id, 72, 1 FROM categoria WHERE nome = N'Frequência' AND categoria_pai_id IS NULL;
-INSERT INTO categoria (nome, categoria_pai_id, prazo_horas, ordem)
-SELECT N'Revisão de frequência', id, 72, 2 FROM categoria WHERE nome = N'Frequência' AND categoria_pai_id IS NULL;
-INSERT INTO categoria (nome, categoria_pai_id, prazo_horas, ordem)
-SELECT N'Declaração de vínculo', id, 120, 1 FROM categoria WHERE nome = N'Documentos' AND categoria_pai_id IS NULL;
-INSERT INTO categoria (nome, categoria_pai_id, prazo_horas, ordem)
-SELECT N'Histórico escolar', id, 120, 2 FROM categoria WHERE nome = N'Documentos' AND categoria_pai_id IS NULL;
+INSERT INTO categoria (nome, categoria_pai_id, prazo_horas, ordem, exige_disciplina)
+SELECT N'Revisão de nota', id, 72, 1, 1 FROM categoria WHERE nome = N'Nota' AND categoria_pai_id IS NULL;
+INSERT INTO categoria (nome, categoria_pai_id, prazo_horas, ordem, exige_disciplina)
+SELECT N'Nota não lançada', id, 48, 2, 1 FROM categoria WHERE nome = N'Nota' AND categoria_pai_id IS NULL;
+INSERT INTO categoria (nome, categoria_pai_id, prazo_horas, ordem, exige_disciplina)
+SELECT N'Justificativa de falta', id, 72, 1, 1 FROM categoria WHERE nome = N'Frequência' AND categoria_pai_id IS NULL;
+INSERT INTO categoria (nome, categoria_pai_id, prazo_horas, ordem, exige_disciplina)
+SELECT N'Revisão de frequência', id, 72, 2, 1 FROM categoria WHERE nome = N'Frequência' AND categoria_pai_id IS NULL;
+INSERT INTO categoria (nome, categoria_pai_id, prazo_horas, ordem, exige_disciplina)
+SELECT N'Declaração de vínculo', id, 120, 1, 0 FROM categoria WHERE nome = N'Documentos' AND categoria_pai_id IS NULL;
+INSERT INTO categoria (nome, categoria_pai_id, prazo_horas, ordem, exige_disciplina)
+SELECT N'Histórico escolar', id, 120, 2, 0 FROM categoria WHERE nome = N'Documentos' AND categoria_pai_id IS NULL;
 
--- Cadastros institucionais de teste (CPFs fictícios)
+-- =====================================================================
+-- Dados de DEMONSTRAÇÃO (apague este bloco antes de usar dados reais)
+-- Os mesmos registros podem ser criados pelas telas de Disciplinas e Cadastros.
+-- =====================================================================
+INSERT INTO disciplina (codigo, nome) VALUES
+                                          ('MAT01', N'Matemática'),
+                                          ('POR01', N'Português'),
+                                          ('FIS01', N'Física');
+
 INSERT INTO cadastro_institucional (matricula, cpf, nome, email, tipo) VALUES
                                                                            ('2026001', '11111111111', N'Aluno Teste Um',     'aluno1@teste.local',   'DISCENTE'),
                                                                            ('2026002', '22222222222', N'Aluno Teste Dois',   'aluno2@teste.local',   'DISCENTE'),

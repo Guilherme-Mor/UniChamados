@@ -45,7 +45,8 @@
         .auth-brand-logo { background: #fff; color: #0b3fa8; width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 800; }
         .auth-hero-title { font-size: 2.2rem; font-weight: 800; line-height: 1.25; margin-bottom: 12px; }
         .auth-hero-desc { color: #dbeafe; font-size: 0.95rem; line-height: 1.5; max-width: 380px; }
-        .auth-hero-circle { position: absolute; bottom: -80px; right: -80px; width: 320px; height: 320px; background: var(--accent-yellow); border-radius: 50%; opacity: 0.9; }
+        .auth-hero-content{position: relative;z-index: 2;}
+        .auth-hero-circle { position: absolute; bottom: -80px; right: -80px; width: 320px; height: 320px; background: var(--accent-yellow); border-radius: 50%; opacity: 0.9;z-index:1; }
         .auth-content { flex: 1; padding: 40px 60px; display: flex; flex-direction: column; justify-content: center; max-width: 650px; margin: 0 auto; }
 
         .auth-steps { display: flex; gap: 12px; margin-bottom: 24px; }
@@ -176,10 +177,12 @@
             <div class="auth-brand-logo">U</div>
             <span>Central de Demandas</span>
         </div>
-        <div>
+
+        <div class="auth-hero-content">
             <h1 id="auth-hero-title" class="auth-hero-title">Suas solicitações acadêmicas, em um só lugar.</h1>
             <p id="auth-hero-desc" class="auth-hero-desc">Abra chamados, acompanhe prazos e receba respostas de forma rápida e transparente.</p>
         </div>
+
         <div class="auth-hero-circle"></div>
     </div>
 
