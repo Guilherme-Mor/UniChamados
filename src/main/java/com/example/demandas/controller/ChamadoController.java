@@ -12,6 +12,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @RestController
 public class ChamadoController {
@@ -47,6 +48,11 @@ public class ChamadoController {
     @GetMapping("/api/chamados/{id}")
     public ChamadoDetalhe detalhe(@PathVariable Long id, Authentication auth) {
         return chamadoService.detalhe(auth.getName(), id);
+    }
+
+    @GetMapping("/api/chamados/{id}/transicoes")
+    public List<String> transicoes(@PathVariable Long id, Authentication auth) {
+        return chamadoService.transicoes(auth.getName(), id);
     }
 
     @PostMapping("/api/chamados/{id}/interacoes")

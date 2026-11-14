@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 @Service
 public class ChamadoService {
 
-    private static final Set<String> FINAIS = Set.of("ENCERRADO", "CANCELADO");
+    private static final Set<String> FINAIS = PoliticaStatus.FINAIS;
 
     private final ChamadoRepository chamadoRepo;
     private final InteracaoRepository interacaoRepo;
@@ -42,7 +42,7 @@ public class ChamadoService {
         this.protocoloGenerator = protocoloGenerator;
     }
 
-    // ===== Abertura e listagem =====
+    // ===== Abertura =====
 
     @Transactional
     public ChamadoResumo abrir(String email, ChamadoRequest req) {
@@ -98,23 +98,7 @@ public class ChamadoService {
         return paraResumo(chamado);
     }
 
-    @Transactional(readOnly = true)
-    public List<ChamadoResumo> listar(String email) {
-        Usuario usuario = buscarUsuario(email);
-        Set<String> perfis = perfisDe(usuario);
-
-        List<Chamado> chamados;
-        if (perfis.contains("ADMIN")) {
-            chamados = chamadoRepo.findAllByOrderByCriadoEmDesc();
-        } else if (perfis.contains("DOCENTE")) {
-            chamados = chamadoRepo.findByResponsavelIdOrderByCriadoEmDesc(usuario.getId());
-        } else {
-            chamados = chamadoRepo.findByUsuarioIdOrderByCriadoEmDesc(usuario.getId());
-        }
-        return chamados.stream().map(this::paraResumo).toList();
-    }
-
-    // ===== Detalhe, mensagem, atribuição e status =====
+    // ===== Detalhe e mensagem =====
 
     @Transactional(readOnly = true)
     public ChamadoDetalhe detalhe(String email, Long chamadoId) {
@@ -153,26 +137,54 @@ public class ChamadoService {
         registrar(chamado, usuario, "MENSAGEM", req.mensagem().trim());
     }
 
+    // ===== Atribuição =====
+
     @Transactional
     public ChamadoResumo atribuir(String email, Long chamadoId, AtribuicaoRequest req) {
         Usuario admin = buscarUsuario(email);
         Chamado chamado = buscarChamado(chamadoId);
+        String statusAtual = chamado.getStatus().getNome();
 
-        if (FINAIS.contains(chamado.getStatus().getNome())) {
+        if (FINAIS.contains(statusAtual)) {
             throw new RegraNegocioException(
-                    "Não é possível atribuir um chamado " + chamado.getStatus().getNome().toLowerCase() + ".",
+                    "Não é possível atribuir um chamado " + statusAtual.toLowerCase() + ".",
                     HttpStatus.CONFLICT);
         }
 
         Usuario docente = usuarioRepo.findById(req.responsavelId())
+                .filter(u -> "ATIVO".equals(u.getStatus()))
                 .filter(u -> perfisDe(u).contains("DOCENTE"))
                 .orElseThrow(() -> new RegraNegocioException(
-                        "Responsável deve ser um docente válido.", HttpStatus.UNPROCESSABLE_ENTITY));
+                        "Responsável deve ser um docente ativo.", HttpStatus.UNPROCESSABLE_ENTITY));
+
+        Usuario anterior = chamado.getResponsavel();
+        if (anterior != null && anterior.getId().equals(docente.getId())) {
+            throw new RegraNegocioException(
+                    "Este docente já é o responsável pelo chamado.", HttpStatus.CONFLICT);
+        }
 
         chamado.setResponsavel(docente);
-        chamado.setStatus(buscarStatus("ATRIBUIDO"));
-        registrar(chamado, admin, "ATRIBUICAO", "Chamado atribuído a " + docente.getNome() + ".");
+        // Só um chamado ainda ABERTO muda para ATRIBUIDO; em andamento, o status é mantido.
+        if (statusAtual.equals("ABERTO")) {
+            chamado.setStatus(buscarStatus("ATRIBUIDO"));
+        }
+
+        String texto = anterior == null
+                ? "Chamado atribuído a " + docente.getNome() + "."
+                : "Chamado reatribuído de " + anterior.getNome() + " para " + docente.getNome() + ".";
+        registrar(chamado, admin, "ATRIBUICAO", texto);
         return paraResumo(chamado);
+    }
+
+    // ===== Status =====
+
+    /** Status que este usuário pode escolher agora para o chamado. */
+    @Transactional(readOnly = true)
+    public List<String> transicoes(String email, Long chamadoId) {
+        Usuario usuario = buscarUsuario(email);
+        Chamado chamado = buscarChamado(chamadoId);
+        exigirAcesso(usuario, chamado);
+        return permitidos(usuario, chamado);
     }
 
     @Transactional
@@ -180,12 +192,6 @@ public class ChamadoService {
         Usuario usuario = buscarUsuario(email);
         Chamado chamado = buscarChamado(chamadoId);
         exigirAcesso(usuario, chamado);
-
-        Set<String> perfis = perfisDe(usuario);
-        boolean admin = perfis.contains("ADMIN");
-        boolean responsavel = chamado.getResponsavel() != null
-                && chamado.getResponsavel().getId().equals(usuario.getId());
-        boolean dono = chamado.getUsuario().getId().equals(usuario.getId());
 
         String novo = req.status().trim().toUpperCase();
         String atual = chamado.getStatus().getNome();
@@ -200,19 +206,14 @@ public class ChamadoService {
                     "Chamado " + atual.toLowerCase() + " não pode mais ser alterado.", HttpStatus.CONFLICT);
         }
 
-        if (admin || responsavel) {
-            if (novo.equals("ABERTO")) {
-                throw new RegraNegocioException("Não é possível voltar o chamado para ABERTO.",
+        if (!permitidos(usuario, chamado).contains(novo)) {
+            if (gerencia(usuario, chamado)) {
+                throw new RegraNegocioException(
+                        "Não é possível mudar o chamado de " + atual + " para " + novo + ".",
                         HttpStatus.UNPROCESSABLE_ENTITY);
             }
-        } else if (dono) {
-            // discente: só cancela o próprio chamado, enquanto não estiver resolvido
-            if (!novo.equals("CANCELADO") || atual.equals("RESOLVIDO")) {
-                throw new RegraNegocioException(
-                        "Você só pode cancelar o chamado enquanto ele não estiver resolvido.", HttpStatus.FORBIDDEN);
-            }
-        } else {
-            throw new RegraNegocioException("Acesso negado.", HttpStatus.FORBIDDEN);
+            throw new RegraNegocioException(
+                    "Você só pode cancelar o chamado enquanto ele não estiver resolvido.", HttpStatus.FORBIDDEN);
         }
 
         chamado.setStatus(novoStatus);
@@ -258,12 +259,28 @@ public class ChamadoService {
 
     // ===== Apoio =====
 
-    private void exigirAcesso(Usuario usuario, Chamado chamado) {
+    private boolean gerencia(Usuario usuario, Chamado chamado) {
         boolean admin = perfisDe(usuario).contains("ADMIN");
-        boolean dono = chamado.getUsuario().getId().equals(usuario.getId());
         boolean responsavel = chamado.getResponsavel() != null
                 && chamado.getResponsavel().getId().equals(usuario.getId());
-        if (!(admin || dono || responsavel)) {
+        return admin || responsavel;
+    }
+
+    private List<String> permitidos(Usuario usuario, Chamado chamado) {
+        String atual = chamado.getStatus().getNome();
+        if (gerencia(usuario, chamado)) {
+            return PoliticaStatus.proximos(atual);
+        }
+        boolean dono = chamado.getUsuario().getId().equals(usuario.getId());
+        if (dono && PoliticaStatus.cancelavelPeloSolicitante(atual)) {
+            return List.of("CANCELADO");
+        }
+        return List.of();
+    }
+
+    private void exigirAcesso(Usuario usuario, Chamado chamado) {
+        boolean dono = chamado.getUsuario().getId().equals(usuario.getId());
+        if (!(gerencia(usuario, chamado) || dono)) {
             throw new RegraNegocioException("Acesso negado.", HttpStatus.FORBIDDEN);
         }
     }
@@ -306,5 +323,4 @@ public class ChamadoService {
                 c.getResponsavel() == null ? null : c.getResponsavel().getNome(),
                 c.getCriadoEm());
     }
-
 }

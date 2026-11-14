@@ -804,19 +804,23 @@
     async function abrirDetalhe(id) {
         chamadoAbertoId = id;
         try {
-            const c = await api('/api/chamados/' + id);
+            const [c, transicoes] = await Promise.all([
+                api('/api/chamados/' + id),
+                api('/api/chamados/' + id + '/transicoes')
+            ]);
             let docentes = [];
             if (temPerfil('ADMIN') && !FINAIS.includes(c.status)) {
                 docentes = await api('/api/docentes');
             }
-            renderDetalhe(c, docentes);
+            renderDetalhe(c, docentes, transicoes);
             VIEWS.forEach(v => $('view-' + v).classList.add('oculto'));
             $('view-detalhe').classList.remove('oculto');
         } catch (e) { aviso(e.message, 'erro'); }
     }
 
-    function renderDetalhe(c, docentes) {
+    function renderDetalhe(c, docentes, transicoes) {
         const final = FINAIS.includes(c.status);
+        const gere = temPerfil('ADMIN') || temPerfil('DOCENTE');
 
         const historico = c.historico.map(i => `
           <li class="t-${esc(i.tipo)}">
@@ -829,24 +833,32 @@
             acoes = `<div class="panel-card"><p class="vazio" style="padding:0">Este chamado está ${esc(c.status.toLowerCase())} e não aceita novas ações.</p></div>`;
         } else {
             if (temPerfil('ADMIN')) {
+                const reatribuir = !!c.responsavel;
                 acoes += `
           <div class="panel-card">
-            <h3 class="panel-title">Atribuir a um docente</h3>
+            <h3 class="panel-title">${reatribuir ? 'Reatribuir a outro docente' : 'Atribuir a um docente'}</h3>
+            ${reatribuir ? '<p class="auth-subtitle" style="margin-bottom:12px;">O status atual do chamado é mantido.</p>' : ''}
             <select id="d-docente" class="form-control">
-              ${docentes.length === 0 ? '<option value="">Nenhum docente cadastrado</option>' : ''}
+              ${docentes.length === 0 ? '<option value="">Nenhum docente ativo</option>' : ''}
               ${docentes.map(d => `<option value="${d.id}">${esc(d.nome)} (${esc(d.email)})</option>`).join('')}
             </select>
-            <button class="btn-primary" style="width:auto; margin-top:12px;" onclick="atribuir()">Atribuir</button>
+            <button class="btn-primary" style="width:auto; margin-top:12px;" onclick="atribuir()">${reatribuir ? 'Reatribuir' : 'Atribuir'}</button>
           </div>`;
             }
-            if (temPerfil('ADMIN') || temPerfil('DOCENTE')) {
-                acoes += `
+
+            if (gere) {
+                if (transicoes.length > 0) {
+                    const opcoes = transicoes.map(s => {
+                        const rotulo = (c.status === 'RESOLVIDO' && s === 'EM_ATENDIMENTO') ? 'EM_ATENDIMENTO (reabrir)' : s;
+                        return `<option value="${esc(s)}">${esc(rotulo)}</option>`;
+                    }).join('');
+                    acoes += `
           <div class="panel-card">
             <h3 class="panel-title">Alterar status</h3>
             <div style="display:flex; gap:12px;">
               <div style="flex:1;">
                 <label style="font-size:0.8rem; font-weight:700;">Novo status</label>
-                <select id="d-status" class="form-control">${STATUS_EDITAVEIS.filter(s => s !== c.status).map(s => `<option>${s}</option>`).join('')}</select>
+                <select id="d-status" class="form-control">${opcoes}</select>
               </div>
               <div style="flex:2;">
                 <label style="font-size:0.8rem; font-weight:700;">Observação (opcional)</label>
@@ -855,7 +867,10 @@
             </div>
             <button class="btn-primary" style="width:auto; margin-top:12px;" onclick="mudarStatus()">Alterar status</button>
           </div>`;
-            } else if (c.status !== 'RESOLVIDO') {
+                } else {
+                    acoes += `<div class="panel-card"><p class="vazio" style="padding:0">Nenhuma mudança de status disponível neste momento.</p></div>`;
+                }
+            } else if (transicoes.includes('CANCELADO')) {
                 acoes += `
           <div class="panel-card">
             <h3 class="panel-title">Cancelar chamado</h3>
@@ -866,6 +881,7 @@
             <button class="btn-primary" style="background:var(--erro); width:auto;" onclick="cancelar()">Cancelar chamado</button>
           </div>`;
             }
+
             acoes += `
         <div class="panel-card">
           <h3 class="panel-title">Nova mensagem</h3>
