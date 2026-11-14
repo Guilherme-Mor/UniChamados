@@ -14,34 +14,35 @@ import org.springframework.transaction.annotation.Transactional;
 @Component
 public class AdminInicializador implements ApplicationRunner {
 
-    private static final String EMAIL_ADMIN = "admin@teste.local";
-
     private final UsuarioRepository usuarioRepo;
     private final PerfilRepository perfilRepo;
     private final PasswordEncoder encoder;
+    private final String emailAdmin;
     private final String senhaAdmin;
 
     public AdminInicializador(UsuarioRepository usuarioRepo,
                               PerfilRepository perfilRepo,
                               PasswordEncoder encoder,
+                              @Value("${app.admin.email}") String emailAdmin,
                               @Value("${app.admin.senha}") String senhaAdmin) {
         this.usuarioRepo = usuarioRepo;
         this.perfilRepo = perfilRepo;
         this.encoder = encoder;
+        this.emailAdmin = emailAdmin.trim().toLowerCase();
         this.senhaAdmin = senhaAdmin;
     }
 
     @Override
     @Transactional
     public void run(ApplicationArguments args) {
-        if (usuarioRepo.existsByEmailIgnoreCase(EMAIL_ADMIN)) return;
+        if (usuarioRepo.existsByEmailIgnoreCase(emailAdmin)) return;
 
         Perfil perfilAdmin = perfilRepo.findByNome("ADMIN")
                 .orElseThrow(() -> new IllegalStateException("Perfil ADMIN não existe"));
 
         Usuario admin = new Usuario();
         admin.setNome("Administrador");
-        admin.setEmail(EMAIL_ADMIN);
+        admin.setEmail(emailAdmin);
         admin.setCpf("00000000000");
         admin.setMatricula("ADMIN");
         admin.setSenhaHash(encoder.encode(senhaAdmin));

@@ -1,7 +1,6 @@
 package com.example.demandas.entity;
 
 import jakarta.persistence.*;
-import org.hibernate.annotations.Nationalized;
 
 @Entity
 @Table(name = "disciplina")
@@ -12,8 +11,6 @@ public class Disciplina {
 
     @Column(nullable = false, unique = true, length = 20)
     private String codigo;
-
-    @Nationalized
     @Column(nullable = false, length = 150)
     private String nome;
 

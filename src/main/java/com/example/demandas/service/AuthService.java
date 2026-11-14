@@ -42,7 +42,7 @@ public class AuthService {
 
         // Mensagem genérica: não revela o que existe ou não na base institucional
         CadastroInstitucional cadastro = cadastroRepo
-                .findByMatriculaAndCpfAndEmailIgnoreCase(matricula, cpf, email)
+                .findByMatriculaAndCpfAndEmailAllIgnoreCase(matricula, cpf, email)
                 .filter(c -> "ATIVO".equals(c.getStatus()))
                 .orElseThrow(() -> new RegraNegocioException(
                         "Dados não conferem com o cadastro institucional.", HttpStatus.UNPROCESSABLE_ENTITY));

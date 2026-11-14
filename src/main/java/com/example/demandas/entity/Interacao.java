@@ -1,7 +1,6 @@
 package com.example.demandas.entity;
 
 import jakarta.persistence.*;
-import org.hibernate.annotations.Nationalized;
 
 import java.time.LocalDateTime;
 
@@ -25,9 +24,7 @@ public class Interacao {
 
     @Column(nullable = false, length = 30)
     private String tipo;
-
-    @Nationalized
-    @Column(columnDefinition = "nvarchar(max)")
+    @Column(columnDefinition = "text")
     private String mensagem;
 
     @Column(name = "criado_em", nullable = false)

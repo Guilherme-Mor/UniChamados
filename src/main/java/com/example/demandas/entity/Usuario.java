@@ -1,7 +1,6 @@
 package com.example.demandas.entity;
 
 import jakarta.persistence.*;
-import org.hibernate.annotations.Nationalized;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
@@ -13,8 +12,6 @@ public class Usuario {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
-
-    @Nationalized
     @Column(nullable = false, length = 150)
     private String nome;
 

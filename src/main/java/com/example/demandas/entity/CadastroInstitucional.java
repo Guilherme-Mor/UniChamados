@@ -1,7 +1,6 @@
 package com.example.demandas.entity;
 
 import jakarta.persistence.*;
-import org.hibernate.annotations.Nationalized;
 
 @Entity
 @Table(name = "cadastro_institucional")
@@ -15,8 +14,6 @@ public class CadastroInstitucional {
 
     @Column(nullable = false, unique = true, length = 11)
     private String cpf;
-
-    @Nationalized
     @Column(nullable = false, length = 150)
     private String nome;
 

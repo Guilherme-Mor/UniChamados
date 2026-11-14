@@ -1,7 +1,6 @@
 package com.example.demandas.entity;
 
 import jakarta.persistence.*;
-import org.hibernate.annotations.Nationalized;
 
 import java.time.LocalDateTime;
 
@@ -34,13 +33,9 @@ public class Chamado {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "disciplina_id")
     private Disciplina disciplina;
-
-    @Nationalized
     @Column(nullable = false, length = 150)
     private String titulo;
-
-    @Nationalized
-    @Column(nullable = false, columnDefinition = "nvarchar(max)")
+    @Column(nullable = false, columnDefinition = "text")
     private String descricao;
 
     @Column(nullable = false, length = 10)

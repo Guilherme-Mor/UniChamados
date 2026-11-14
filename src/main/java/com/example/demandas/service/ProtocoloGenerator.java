@@ -17,7 +17,7 @@ public class ProtocoloGenerator {
 
     /** Gera o protocolo no formato AAAAMMDD-NNNNNN usando a sequence do SQL Server. */
     public String proximo() {
-        Number numero = (Number) em.createNativeQuery("SELECT NEXT VALUE FOR seq_protocolo")
+        Number numero = (Number) em.createNativeQuery("SELECT nextval('seq_protocolo')")
                 .getSingleResult();
         String data = LocalDate.now().format(DateTimeFormatter.BASIC_ISO_DATE);
         return String.format("%s-%06d", data, numero.longValue());
