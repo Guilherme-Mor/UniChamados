@@ -10,7 +10,11 @@ public record TelegramProperties(
         @DefaultValue("") String botUsername,
         @DefaultValue("") String webhookSecret,
         @DefaultValue("polling") String modo,
-        @DefaultValue("") String appPublicUrl) {
+        @DefaultValue("") String appPublicUrl,
+        @DefaultValue("10") int codigoValidadeMinutos,
+        @DefaultValue("10") int pedidoValidadeMinutos,
+        @DefaultValue("5") int codigoLimiteHora,
+        @DefaultValue("5") int tentativasLimiteHora) {
 
     /** Integração ligada e com token informado. */
     public boolean ativo() {

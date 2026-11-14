@@ -23,15 +23,20 @@ public class TelegramUpdateHandler {
             <b>Comandos</b>
             /start - apresentação
             /ajuda - esta lista
+            /desvincular - solta este Telegram da sua conta
 
             Os demais comandos ficam disponíveis depois que a sua conta for vinculada.""";
 
     private final TelegramUpdateProcessadoRepository processados;
     private final TelegramClient telegram;
+    private final TelegramVinculoService vinculos;
 
-    public TelegramUpdateHandler(TelegramUpdateProcessadoRepository processados, TelegramClient telegram) {
+    public TelegramUpdateHandler(TelegramUpdateProcessadoRepository processados,
+                                 TelegramClient telegram,
+                                 TelegramVinculoService vinculos) {
         this.processados = processados;
         this.telegram = telegram;
+        this.vinculos = vinculos;
     }
 
     public void tratar(TelegramTipos.Update update) {
@@ -51,6 +56,9 @@ public class TelegramUpdateHandler {
             }
         } catch (TelegramException e) {
             log.warn("Não foi possível responder no Telegram: {}", e.getMessage());
+        } catch (RuntimeException e) {
+            log.error("Erro ao tratar o evento {}.", update.updateId(), e);
+            responderErro(update);
         }
     }
 
@@ -80,10 +88,10 @@ public class TelegramUpdateHandler {
                 if (argumento.isEmpty()) {
                     telegram.enviarMensagem(chatId, BOAS_VINDAS);
                 } else {
-                    // Etapa 5 troca este trecho pela vinculação de verdade.
-                    telegram.enviarMensagem(chatId, "Código recebido. A vinculação ainda não está habilitada nesta versão.");
+                    telegram.enviarMensagem(chatId, vinculos.iniciarVinculo(chatId, mensagem.from(), argumento));
                 }
             }
+            case "/desvincular" -> telegram.enviarMensagem(chatId, vinculos.desvincularPorChat(chatId));
             case "/ajuda", "/help" -> telegram.enviarMensagem(chatId, AJUDA);
             default -> telegram.enviarMensagem(chatId, "Não entendi. Use /ajuda para ver os comandos.");
         }
@@ -92,5 +100,21 @@ public class TelegramUpdateHandler {
     private void tratarBotao(TelegramTipos.CallbackQuery botao) {
         // As ações dos botões entram nas próximas etapas.
         telegram.responderCallback(botao.id(), "Ação ainda não disponível.");
+    }
+
+    private void responderErro(TelegramTipos.Update update) {
+        Long chatId = null;
+        if (update.message() != null && update.message().chat() != null) {
+            chatId = update.message().chat().id();
+        } else if (update.callbackQuery() != null && update.callbackQuery().message() != null
+                && update.callbackQuery().message().chat() != null) {
+            chatId = update.callbackQuery().message().chat().id();
+        }
+        if (chatId == null) return;
+        try {
+            telegram.enviarMensagem(chatId, "Algo deu errado. Tente novamente em instantes.");
+        } catch (TelegramException ignorado) {
+            // já registramos o erro original
+        }
     }
 }

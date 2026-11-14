@@ -281,6 +281,7 @@
             <li class="nav-item"><button id="nav-disciplinas" class="oculto" onclick="ir('disciplinas')">📚 Disciplinas</button></li>
             <li class="nav-item"><button id="nav-usuarios" class="oculto" onclick="ir('usuarios')">👥 Usuários</button></li>
             <li class="nav-item"><button id="nav-cadastros" class="oculto" onclick="ir('cadastros')">🪪 Cadastros</button></li>
+            <li class="nav-item"><button id="nav-telegram" class="oculto" onclick="ir('telegram')">✈️ Telegram</button></li>
         </ul>
     </aside>
 
@@ -506,6 +507,15 @@
             </div>
         </section>
 
+        <!-- Telegram (docente) -->
+        <section id="view-telegram" class="oculto">
+            <div class="panel-card">
+                <h2 class="panel-title">Telegram</h2>
+                <p class="auth-subtitle" style="margin-bottom:16px;">Receba avisos de chamados atribuídos a você e responda direto pelo Telegram.</p>
+                <div id="tg-conteudo"></div>
+            </div>
+        </section>
+
         <!-- Detalhe -->
         <section id="view-detalhe" class="oculto"></section>
     </main>
@@ -517,8 +527,8 @@
     // ---------- Utilitários ----------
     const STATUS_EDITAVEIS = ['ATRIBUIDO','EM_ATENDIMENTO','AGUARDANDO_DISCENTE','RESOLVIDO','ENCERRADO','CANCELADO'];
     const FINAIS = ['ENCERRADO','CANCELADO'];
-    const VIEWS = ['dashboard','lista','novo','disciplinas','usuarios','cadastros','detalhe'];
-    const NAVS = ['dashboard','lista','novo','disciplinas','usuarios','cadastros'];
+    const VIEWS = ['dashboard','lista','novo','disciplinas','usuarios','cadastros','telegram','detalhe'];
+    const NAVS = ['dashboard','lista','novo','disciplinas','usuarios','cadastros','telegram'];
     let eu = null;
     let chamadoAbertoId = null;
     let listaPagina = 0;
@@ -644,6 +654,7 @@
 
         $('nav-novo').classList.toggle('oculto', !temPerfil('DISCENTE'));
         ['disciplinas','usuarios','cadastros'].forEach(n => $('nav-' + n).classList.toggle('oculto', !temPerfil('ADMIN')));
+        $('nav-telegram').classList.toggle('oculto', !temPerfil('DOCENTE'));
 
         $('tela-auth').classList.add('oculto');
         $('tela-app').classList.remove('oculto');
@@ -655,6 +666,7 @@
         VIEWS.forEach(v => $('view-' + v).classList.add('oculto'));
         $('view-' + nome).classList.remove('oculto');
         NAVS.forEach(v => $('nav-' + v).classList.toggle('ativo', v === nome));
+        if (nome !== 'telegram') pararTelegram();
 
         if (nome === 'dashboard') carregarDashboard();
         if (nome === 'lista') carregarLista(0);
@@ -662,6 +674,7 @@
         if (nome === 'disciplinas') carregarDisciplinasAdmin();
         if (nome === 'usuarios') carregarUsuarios();
         if (nome === 'cadastros') carregarCadastros();
+        if (nome === 'telegram') carregarTelegram();
     }
 
     // ---------- Dashboard ----------
@@ -1077,6 +1090,165 @@
             aviso('Cadastro adicionado. A pessoa já pode fazer o primeiro acesso.');
             carregarCadastros();
         } catch (e) { aviso(e.message, 'erro'); }
+    }
+
+    // ---------- Telegram (docente) ----------
+    let tgEstado = null;
+    let tgCodigo = null;       // { codigo, link, qrCode, fim }
+    let tgPedidoFim = null;    // instante em que o pedido pendente expira
+    let tgPoll = null;
+    let tgTick = null;
+
+    function tgAssinatura(e) {
+        return e ? [e.habilitado, e.estado, e.username, e.nome].join('|') : '';
+    }
+
+    function formatarTempo(segundos) {
+        return Math.floor(segundos / 60) + ':' + String(segundos % 60).padStart(2, '0');
+    }
+
+    async function carregarTelegram() {
+        tgCodigo = null;
+        await atualizarTelegram(true);
+        pararTelegram();
+        // Consulta o servidor a cada 3 s só enquanto há um código ativo ou um pedido pendente
+        tgPoll = setInterval(async () => {
+            if (!eu || $('view-telegram').classList.contains('oculto')) { pararTelegram(); return; }
+            if (tgCodigo || (tgEstado && tgEstado.estado === 'PENDENTE')) await atualizarTelegram(false);
+        }, 3000);
+        tgTick = setInterval(tickTelegram, 1000);
+    }
+
+    function pararTelegram() {
+        clearInterval(tgPoll);
+        clearInterval(tgTick);
+        tgPoll = null;
+        tgTick = null;
+    }
+
+    async function atualizarTelegram(forcar) {
+        try {
+            const novo = await api('/api/telegram/vinculo');
+            const mudou = forcar || tgAssinatura(novo) !== tgAssinatura(tgEstado);
+            tgEstado = novo;
+            tgPedidoFim = novo.estado === 'PENDENTE' ? Date.now() + novo.restanteSegundos * 1000 : null;
+            if (novo.estado !== 'NENHUM') tgCodigo = null;
+            if (mudou) renderTelegram();
+        } catch (e) { if (forcar) aviso(e.message, 'erro'); }
+    }
+
+    function tickTelegram() {
+        const el = $('tg-contagem');
+        if (tgCodigo) {
+            const resta = Math.max(0, Math.round((tgCodigo.fim - Date.now()) / 1000));
+            if (resta === 0) {
+                tgCodigo = null;
+                renderTelegram();
+                aviso('O código expirou. Gere outro.', 'erro');
+                return;
+            }
+            if (el) el.textContent = formatarTempo(resta);
+        } else if (tgPedidoFim && el) {
+            el.textContent = formatarTempo(Math.max(0, Math.round((tgPedidoFim - Date.now()) / 1000)));
+        }
+    }
+
+    function renderTelegram() {
+        const box = $('tg-conteudo');
+        const e = tgEstado;
+        if (!e) { box.innerHTML = ''; return; }
+
+        if (!e.habilitado) {
+            box.innerHTML = '<p class="vazio">A integração com o Telegram não está habilitada neste ambiente.</p>';
+            return;
+        }
+
+        const quem = esc(e.nome || 'Telegram') + (e.username ? ' (@' + esc(e.username) + ')' : '');
+
+        if (e.estado === 'ATIVO') {
+            box.innerHTML = `
+                <div class="info-box" style="background:#f0fdf4; color:#166534;">✅ Telegram vinculado: <b>${quem}</b></div>
+                <button class="btn-outline btn-sm btn-perigo" onclick="desvincularTelegram()">Desvincular</button>`;
+            return;
+        }
+
+        if (e.estado === 'PENDENTE') {
+            box.innerHTML = `
+                <div class="info-box">🔔 O Telegram <b>${quem}</b> pediu para vincular à sua conta.</div>
+                <p style="margin:0 0 16px;">Foi você? Confirme em até <b id="tg-contagem">${formatarTempo(e.restanteSegundos)}</b>.
+                   Se não reconhece este pedido, recuse.</p>
+                <div style="display:flex; gap:12px;">
+                    <button class="btn-primary btn-sm" onclick="confirmarTelegram()">Confirmar vínculo</button>
+                    <button class="btn-outline btn-sm btn-perigo" onclick="recusarTelegram()">Recusar</button>
+                </div>`;
+            return;
+        }
+
+        if (tgCodigo) {
+            box.innerHTML = `
+                <div style="display:flex; gap:32px; flex-wrap:wrap; align-items:flex-start;">
+                    <img src="${tgCodigo.qrCode}" alt="QR Code para vincular o Telegram" width="220" height="220"
+                         style="border:1px solid var(--border-color); border-radius:8px; display:block;">
+                    <div style="flex:1; min-width:260px;">
+                        <p style="margin-top:0;"><b>No celular:</b> aponte a câmera para o QR Code e toque em <b>Iniciar</b> no Telegram.</p>
+                        <p><b>No computador:</b> <a href="${esc(tgCodigo.link)}" target="_blank" rel="noopener">abrir no Telegram</a>
+                           ou envie ao bot <code>/start ${esc(tgCodigo.codigo)}</code></p>
+                        <p style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+                            <b style="font-family:Consolas, monospace; font-size:1.3rem; letter-spacing:2px;">${esc(tgCodigo.codigo)}</b>
+                            <button class="btn-outline btn-sm" onclick="copiarCodigoTelegram()">Copiar</button>
+                        </p>
+                        <p>Expira em <b id="tg-contagem">${formatarTempo(Math.max(0, Math.round((tgCodigo.fim - Date.now()) / 1000)))}</b>.
+                           Depois de tocar em Iniciar, esta tela pedirá a sua confirmação.</p>
+                        <p class="auth-subtitle" style="font-size:0.8rem; margin-bottom:12px;">O QR Code e o código são pessoais: não compartilhe nem fotografe.</p>
+                        <button class="btn-outline btn-sm" onclick="gerarCodigoTelegram()">Gerar novo código</button>
+                    </div>
+                </div>`;
+            return;
+        }
+
+        box.innerHTML = `
+            <p style="margin-top:0;">Nenhum Telegram vinculado. Gere um código e escaneie o QR Code com o celular.</p>
+            <button class="btn-primary btn-sm" onclick="gerarCodigoTelegram()">Gerar código de vinculação</button>`;
+    }
+
+    async function gerarCodigoTelegram() {
+        try {
+            const r = await enviar('POST', '/api/telegram/vinculo/codigo', {});
+            tgCodigo = { codigo: r.codigo, link: r.link, qrCode: r.qrCode, fim: Date.now() + r.validadeSegundos * 1000 };
+            renderTelegram();
+        } catch (e) { aviso(e.message, 'erro'); }
+    }
+
+    async function copiarCodigoTelegram() {
+        try {
+            await navigator.clipboard.writeText(tgCodigo.codigo);
+            aviso('Código copiado.');
+        } catch (e) { aviso('Não foi possível copiar. Selecione o código manualmente.', 'erro'); }
+    }
+
+    async function confirmarTelegram() {
+        try {
+            await api('/api/telegram/vinculo/confirmar', { method: 'POST' });
+            aviso('Telegram vinculado.');
+            atualizarTelegram(true);
+        } catch (e) { aviso(e.message, 'erro'); atualizarTelegram(true); }
+    }
+
+    async function recusarTelegram() {
+        try {
+            await api('/api/telegram/vinculo/recusar', { method: 'POST' });
+            aviso('Pedido recusado.');
+            atualizarTelegram(true);
+        } catch (e) { aviso(e.message, 'erro'); atualizarTelegram(true); }
+    }
+
+    async function desvincularTelegram() {
+        if (!confirm('Desvincular este Telegram da sua conta?')) return;
+        try {
+            await api('/api/telegram/vinculo', { method: 'DELETE' });
+            aviso('Telegram desvinculado.');
+            atualizarTelegram(true);
+        } catch (e) { aviso(e.message, 'erro'); atualizarTelegram(true); }
     }
 
     // ---------- Início ----------
