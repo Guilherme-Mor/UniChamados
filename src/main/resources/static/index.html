@@ -1297,7 +1297,12 @@
                         <td>${esc(d.email)}</td>
                         <td>${estado(d)}</td>
                         <td>${d.codigosNaHora} / ${p.limiteCodigos}</td>
-                        <td><button class="btn-outline btn-sm" onclick="liberarDocenteTelegram(${d.id})">Liberar</button></td>
+                        <td style="white-space:nowrap;">
+                            <button class="btn-outline btn-sm" onclick="liberarDocenteTelegram(${d.id})">Liberar</button>
+                            ${d.estado !== 'NENHUM'
+                    ? `<button class="btn-outline btn-sm btn-perigo" onclick="desvincularDocenteTelegram(${d.id})">Desvincular</button>`
+                    : ''}
+                        </td>
                     </tr>`).join('');
 
             $('tgadmin-bloqueios').innerHTML = p.bloqueios.length === 0
@@ -1317,6 +1322,15 @@
         try {
             await api('/api/admin/telegram/docentes/' + id + '/liberar', { method: 'POST' });
             aviso('Docente liberado.');
+            carregarTgAdmin();
+        } catch (e) { aviso(e.message, 'erro'); }
+    }
+
+    async function desvincularDocenteTelegram(id) {
+        if (!confirm('Desvincular o Telegram deste docente? Ele deixará de receber avisos e precisará vincular de novo.')) return;
+        try {
+            await api('/api/admin/telegram/docentes/' + id + '/desvincular', { method: 'POST' });
+            aviso('Telegram do docente desvinculado.');
             carregarTgAdmin();
         } catch (e) { aviso(e.message, 'erro'); }
     }

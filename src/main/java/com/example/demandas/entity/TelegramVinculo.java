@@ -38,6 +38,11 @@ public class TelegramVinculo {
     @Column(name = "motivo_revogacao", length = 30)
     private String motivoRevogacao;
 
+    /** Admin que revogou o vínculo (só preenchido quando a revogação foi feita por um admin). */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "revogado_por_id")
+    private Usuario revogadoPor;
+
     @Column(name = "expira_em")
     private LocalDateTime expiraEm;
 
@@ -77,6 +82,8 @@ public class TelegramVinculo {
     public void setStatus(String status) { this.status = status; }
     public String getMotivoRevogacao() { return motivoRevogacao; }
     public void setMotivoRevogacao(String motivoRevogacao) { this.motivoRevogacao = motivoRevogacao; }
+    public Usuario getRevogadoPor() { return revogadoPor; }
+    public void setRevogadoPor(Usuario revogadoPor) { this.revogadoPor = revogadoPor; }
     public LocalDateTime getExpiraEm() { return expiraEm; }
     public void setExpiraEm(LocalDateTime expiraEm) { this.expiraEm = expiraEm; }
     public LocalDateTime getCriadoEm() { return criadoEm; }

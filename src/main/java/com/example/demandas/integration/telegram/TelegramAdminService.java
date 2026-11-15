@@ -116,6 +116,23 @@ public class TelegramAdminService {
         tentativaRepo.apagarDoChat(chatId);
     }
 
+    /** Revoga o vínculo vigente (ativo ou pendente) do docente. Devolve o aviso para o chat desvinculado. */
+    @Transactional
+    public AvisoTelegram desvincularDocente(String emailAdmin, Integer docenteId) {
+        Usuario admin = buscarAdmin(emailAdmin);
+
+        TelegramVinculo v = vinculoRepo.findByUsuarioIdAndStatusIn(docenteId, VIGENTES)
+                .orElseThrow(() -> new RegraNegocioException(
+                        "Este docente não tem Telegram vinculado.", HttpStatus.CONFLICT));
+
+        v.setStatus(TelegramVinculo.REVOGADO);
+        v.setMotivoRevogacao("DESVINCULADO_ADMIN");
+        v.setRevogadoPor(admin);
+        v.setExpiraEm(null);
+        return new AvisoTelegram(v.getChatId(),
+                "Este Telegram foi desvinculado da sua conta pelo administrador do UniChamados.");
+    }
+
     private Usuario buscarAdmin(String email) {
         return usuarioRepo.findByEmailIgnoreCase(email)
                 .orElseThrow(() -> new RegraNegocioException("Usuário não encontrado.", HttpStatus.NOT_FOUND));

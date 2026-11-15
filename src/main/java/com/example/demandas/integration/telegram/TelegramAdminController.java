@@ -16,9 +16,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class TelegramAdminController {
 
     private final TelegramAdminService servico;
+    private final TelegramAvisos avisos;
 
-    public TelegramAdminController(TelegramAdminService servico) {
+    public TelegramAdminController(TelegramAdminService servico, TelegramAvisos avisos) {
         this.servico = servico;
+        this.avisos = avisos;
     }
 
     @GetMapping
@@ -29,6 +31,12 @@ public class TelegramAdminController {
     @PostMapping("/docentes/{id}/liberar")
     public ResponseEntity<Void> liberarDocente(@PathVariable Integer id, Authentication auth) {
         servico.liberarDocente(auth.getName(), id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/docentes/{id}/desvincular")
+    public ResponseEntity<Void> desvincularDocente(@PathVariable Integer id, Authentication auth) {
+        avisos.enviar(servico.desvincularDocente(auth.getName(), id));   // o aviso sai depois do commit
         return ResponseEntity.noContent().build();
     }
 
