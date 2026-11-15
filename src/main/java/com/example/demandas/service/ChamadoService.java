@@ -3,6 +3,7 @@ package com.example.demandas.service;
 import com.example.demandas.dto.*;
 import com.example.demandas.entity.*;
 import com.example.demandas.exception.RegraNegocioException;
+import com.example.demandas.integration.telegram.TelegramNotificacoes;
 import com.example.demandas.repository.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -25,6 +26,7 @@ public class ChamadoService {
     private final StatusChamadoRepository statusRepo;
     private final UsuarioRepository usuarioRepo;
     private final ProtocoloGenerator protocoloGenerator;
+    private final TelegramNotificacoes telegramNotificacoes;
 
     public ChamadoService(ChamadoRepository chamadoRepo,
                           InteracaoRepository interacaoRepo,
@@ -32,7 +34,8 @@ public class ChamadoService {
                           DisciplinaRepository disciplinaRepo,
                           StatusChamadoRepository statusRepo,
                           UsuarioRepository usuarioRepo,
-                          ProtocoloGenerator protocoloGenerator) {
+                          ProtocoloGenerator protocoloGenerator,
+                          TelegramNotificacoes telegramNotificacoes) {
         this.chamadoRepo = chamadoRepo;
         this.interacaoRepo = interacaoRepo;
         this.categoriaRepo = categoriaRepo;
@@ -40,6 +43,7 @@ public class ChamadoService {
         this.statusRepo = statusRepo;
         this.usuarioRepo = usuarioRepo;
         this.protocoloGenerator = protocoloGenerator;
+        this.telegramNotificacoes = telegramNotificacoes;
     }
 
     // ===== Abertura =====
@@ -94,6 +98,7 @@ public class ChamadoService {
         if (responsavel != null) {
             registrar(chamado, usuario, "ATRIBUICAO",
                     "Atribuído automaticamente a " + responsavel.getNome() + " (" + origem + ").");
+            telegramNotificacoes.avisarAtribuicao(chamado, responsavel, false);
         }
         return paraResumo(chamado);
     }
@@ -135,6 +140,7 @@ public class ChamadoService {
                     HttpStatus.CONFLICT);
         }
         registrar(chamado, usuario, "MENSAGEM", req.mensagem().trim());
+        telegramNotificacoes.avisarNovaMensagem(chamado, usuario);
     }
 
     // ===== Atribuição =====
@@ -173,6 +179,7 @@ public class ChamadoService {
                 ? "Chamado atribuído a " + docente.getNome() + "."
                 : "Chamado reatribuído de " + anterior.getNome() + " para " + docente.getNome() + ".";
         registrar(chamado, admin, "ATRIBUICAO", texto);
+        telegramNotificacoes.avisarAtribuicao(chamado, docente, anterior != null);
         return paraResumo(chamado);
     }
 

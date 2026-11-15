@@ -19,16 +19,11 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.time.Duration;
-import java.time.Instant;
 import java.time.LocalDateTime;
-import java.util.ArrayDeque;
-import java.util.Deque;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
 @Service
@@ -44,23 +39,28 @@ public class TelegramVinculoService {
 
     private static final String CODIGO_INVALIDO =
             "Código inválido ou expirado. Gere um novo código no portal (menu Telegram).";
+    private static final String CHAT_BLOQUEADO =
+            "Muitas tentativas inválidas neste Telegram. Aguarde até 1 hora ou peça ao administrador "
+                    + "para liberar o seu acesso.";
 
     private final SecureRandom random = new SecureRandom();
-    private final Map<Long, Deque<Instant>> falhas = new ConcurrentHashMap<>();
 
     private final TelegramProperties props;
     private final TelegramVinculoRepository vinculoRepo;
     private final TelegramCodigoVinculoRepository codigoRepo;
     private final UsuarioRepository usuarioRepo;
+    private final TelegramLimites limites;
 
     public TelegramVinculoService(TelegramProperties props,
                                   TelegramVinculoRepository vinculoRepo,
                                   TelegramCodigoVinculoRepository codigoRepo,
-                                  UsuarioRepository usuarioRepo) {
+                                  UsuarioRepository usuarioRepo,
+                                  TelegramLimites limites) {
         this.props = props;
         this.vinculoRepo = vinculoRepo;
         this.codigoRepo = codigoRepo;
         this.usuarioRepo = usuarioRepo;
+        this.limites = limites;
     }
 
     // =====================================================================
@@ -110,14 +110,14 @@ public class TelegramVinculoService {
             throw new RegraNegocioException(
                     "Já existe um Telegram vinculado. Desvincule antes de vincular outro.", HttpStatus.CONFLICT);
         }
-        atual.ifPresent(pendente -> revogar(pendente, "SUBSTITUIDO"));
 
-        if (codigoRepo.countByUsuarioIdAndCriadoEmAfter(docente.getId(), agora.minusHours(1))
-                >= props.codigoLimiteHora()) {
+        if (limites.codigosNaJanela(docente.getId(), agora) >= props.codigoLimiteHora()) {
             throw new RegraNegocioException(
-                    "Muitos códigos gerados na última hora. Tente novamente mais tarde.",
+                    "Limite de códigos por hora atingido. Aguarde até 1 hora ou peça ao administrador "
+                            + "para liberar o seu Telegram.",
                     HttpStatus.TOO_MANY_REQUESTS);
         }
+        atual.ifPresent(pendente -> revogar(pendente, "SUBSTITUIDO"));
 
         // Só um código ativo por docente: os anteriores deixam de valer
         codigoRepo.findByUsuarioIdAndUsadoEmIsNullAndExpiraEmAfter(docente.getId(), agora)
@@ -193,15 +193,15 @@ public class TelegramVinculoService {
     /** Trata "/start CÓDIGO". Devolve o texto (HTML) a responder no chat. */
     @Transactional
     public String iniciarVinculo(Long chatId, TelegramTipos.TgUser from, String digitado) {
-        if (!tentativasPermitidas(chatId)) {
-            return "Muitas tentativas inválidas. Aguarde um pouco e gere um novo código no portal.";
-        }
         LocalDateTime agora = LocalDateTime.now();
+        if (limites.chatBloqueado(chatId, agora)) {
+            return CHAT_BLOQUEADO;
+        }
         expirarPendentes(agora);
 
         TelegramCodigoVinculo codigo = localizarCodigoValido(digitado, agora);
         if (codigo == null || !docenteAtivo(codigo.getUsuario())) {
-            registrarFalha(chatId);
+            limites.registrarFalha(chatId, from);
             return CODIGO_INVALIDO;
         }
         Usuario docente = codigo.getUsuario();
@@ -323,24 +323,5 @@ public class TelegramVinculoService {
         String nome = ((u.firstName() == null ? "" : u.firstName()) + " "
                 + (u.lastName() == null ? "" : u.lastName())).trim();
         return nome.isEmpty() ? null : TelegramTexto.truncar(nome, 200);
-    }
-
-    // Limite de tentativas inválidas por chat (na memória: basta para uma instância só)
-
-    private boolean tentativasPermitidas(Long chatId) {
-        Deque<Instant> fila = falhas.computeIfAbsent(chatId, k -> new ArrayDeque<>());
-        synchronized (fila) {
-            Instant limite = Instant.now().minus(Duration.ofHours(1));
-            while (!fila.isEmpty() && fila.peekFirst().isBefore(limite)) fila.pollFirst();
-            return fila.size() < props.tentativasLimiteHora();
-        }
-    }
-
-    private void registrarFalha(Long chatId) {
-        if (falhas.size() > 10_000) falhas.clear();
-        Deque<Instant> fila = falhas.computeIfAbsent(chatId, k -> new ArrayDeque<>());
-        synchronized (fila) {
-            fila.addLast(Instant.now());
-        }
     }
 }

@@ -282,6 +282,7 @@
             <li class="nav-item"><button id="nav-usuarios" class="oculto" onclick="ir('usuarios')">👥 Usuários</button></li>
             <li class="nav-item"><button id="nav-cadastros" class="oculto" onclick="ir('cadastros')">🪪 Cadastros</button></li>
             <li class="nav-item"><button id="nav-telegram" class="oculto" onclick="ir('telegram')">✈️ Telegram</button></li>
+            <li class="nav-item"><button id="nav-tgadmin" class="oculto" onclick="ir('tgadmin')">✈️ Telegram</button></li>
         </ul>
     </aside>
 
@@ -507,6 +508,32 @@
             </div>
         </section>
 
+        <!-- Telegram (admin) -->
+        <section id="view-tgadmin" class="oculto">
+            <div class="panel-card">
+                <h2 class="panel-title">Telegram dos docentes</h2>
+                <p class="auth-subtitle" style="margin-bottom:16px;">
+                    Liberar zera os limites de 1 hora do docente (geração de códigos e tentativas inválidas) e fica registrado com o seu nome.
+                </p>
+                <div class="table-responsive">
+                    <table>
+                        <thead><tr><th>Docente</th><th>E-mail</th><th>Telegram</th><th>Códigos na última hora</th><th></th></tr></thead>
+                        <tbody id="tgadmin-docentes"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="panel-card">
+                <h2 class="panel-title">Telegrams bloqueados por tentativas inválidas</h2>
+                <p class="auth-subtitle" style="margin-bottom:16px;">Aparecem aqui pessoas que erraram o código várias vezes, mesmo sem vínculo com nenhum docente.</p>
+                <div class="table-responsive">
+                    <table>
+                        <thead><tr><th>Telegram</th><th>Tentativas</th><th>Última tentativa</th><th></th></tr></thead>
+                        <tbody id="tgadmin-bloqueios"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
         <!-- Telegram (docente) -->
         <section id="view-telegram" class="oculto">
             <div class="panel-card">
@@ -527,8 +554,8 @@
     // ---------- Utilitários ----------
     const STATUS_EDITAVEIS = ['ATRIBUIDO','EM_ATENDIMENTO','AGUARDANDO_DISCENTE','RESOLVIDO','ENCERRADO','CANCELADO'];
     const FINAIS = ['ENCERRADO','CANCELADO'];
-    const VIEWS = ['dashboard','lista','novo','disciplinas','usuarios','cadastros','telegram','detalhe'];
-    const NAVS = ['dashboard','lista','novo','disciplinas','usuarios','cadastros','telegram'];
+    const VIEWS = ['dashboard','lista','novo','disciplinas','usuarios','cadastros','telegram','tgadmin','detalhe'];
+    const NAVS = ['dashboard','lista','novo','disciplinas','usuarios','cadastros','telegram','tgadmin'];
     let eu = null;
     let chamadoAbertoId = null;
     let listaPagina = 0;
@@ -655,6 +682,7 @@
         $('nav-novo').classList.toggle('oculto', !temPerfil('DISCENTE'));
         ['disciplinas','usuarios','cadastros'].forEach(n => $('nav-' + n).classList.toggle('oculto', !temPerfil('ADMIN')));
         $('nav-telegram').classList.toggle('oculto', !temPerfil('DOCENTE'));
+        $('nav-tgadmin').classList.toggle('oculto', !temPerfil('ADMIN'));
 
         $('tela-auth').classList.add('oculto');
         $('tela-app').classList.remove('oculto');
@@ -675,6 +703,7 @@
         if (nome === 'usuarios') carregarUsuarios();
         if (nome === 'cadastros') carregarCadastros();
         if (nome === 'telegram') carregarTelegram();
+        if (nome === 'tgadmin') carregarTgAdmin();
     }
 
     // ---------- Dashboard ----------
@@ -1249,6 +1278,56 @@
             aviso('Telegram desvinculado.');
             atualizarTelegram(true);
         } catch (e) { aviso(e.message, 'erro'); atualizarTelegram(true); }
+    }
+
+    // ---------- Telegram (admin) ----------
+    async function carregarTgAdmin() {
+        try {
+            const p = await api('/api/admin/telegram');
+
+            const estado = d => d.estado === 'ATIVO'
+                ? 'Ativo' + (d.username ? ' (@' + esc(d.username) + ')' : '')
+                : d.estado === 'PENDENTE' ? 'Pendente de confirmação' : 'Sem vínculo';
+
+            $('tgadmin-docentes').innerHTML = p.docentes.length === 0
+                ? '<tr><td colspan="5" class="vazio">Nenhum docente ativo.</td></tr>'
+                : p.docentes.map(d => `
+                    <tr style="cursor:default">
+                        <td>${esc(d.nome)}</td>
+                        <td>${esc(d.email)}</td>
+                        <td>${estado(d)}</td>
+                        <td>${d.codigosNaHora} / ${p.limiteCodigos}</td>
+                        <td><button class="btn-outline btn-sm" onclick="liberarDocenteTelegram(${d.id})">Liberar</button></td>
+                    </tr>`).join('');
+
+            $('tgadmin-bloqueios').innerHTML = p.bloqueios.length === 0
+                ? '<tr><td colspan="4" class="vazio">Nenhum Telegram bloqueado.</td></tr>'
+                : p.bloqueios.map(b => `
+                    <tr style="cursor:default">
+                        <td>${esc(b.nome || 'Sem nome')}${b.username ? ' (@' + esc(b.username) + ')' : ''}</td>
+                        <td>${b.tentativas} / ${p.limiteTentativas}</td>
+                        <td>${data(b.ultimaTentativa)}</td>
+                        <td><button class="btn-outline btn-sm" onclick="liberarChatTelegram(${b.chatId})">Liberar</button></td>
+                    </tr>`).join('');
+        } catch (e) { aviso(e.message, 'erro'); }
+    }
+
+    async function liberarDocenteTelegram(id) {
+        if (!confirm('Liberar o Telegram deste docente? Os limites de 1 hora serão zerados.')) return;
+        try {
+            await api('/api/admin/telegram/docentes/' + id + '/liberar', { method: 'POST' });
+            aviso('Docente liberado.');
+            carregarTgAdmin();
+        } catch (e) { aviso(e.message, 'erro'); }
+    }
+
+    async function liberarChatTelegram(chatId) {
+        if (!confirm('Liberar este Telegram para novas tentativas?')) return;
+        try {
+            await api('/api/admin/telegram/chats/' + chatId + '/liberar', { method: 'POST' });
+            aviso('Telegram liberado.');
+            carregarTgAdmin();
+        } catch (e) { aviso(e.message, 'erro'); }
     }
 
     // ---------- Início ----------

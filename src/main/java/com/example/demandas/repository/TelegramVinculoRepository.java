@@ -16,4 +16,8 @@ public interface TelegramVinculoRepository extends JpaRepository<TelegramVinculo
     Optional<TelegramVinculo> findByChatIdAndStatusIn(Long chatId, Collection<String> status);
 
     List<TelegramVinculo> findByStatusAndExpiraEmBefore(String status, LocalDateTime limite);
+
+    List<TelegramVinculo> findByStatusIn(Collection<String> status);
+
+    List<TelegramVinculo> findByUsuarioId(Integer usuarioId);
 }
