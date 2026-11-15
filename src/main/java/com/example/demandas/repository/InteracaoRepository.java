@@ -7,4 +7,6 @@ import java.util.List;
 
 public interface InteracaoRepository extends JpaRepository<Interacao, Long> {
     List<Interacao> findByChamadoIdOrderByCriadoEmAsc(Long chamadoId);
+
+    List<Interacao> findTop3ByChamadoIdOrderByCriadoEmDescIdDesc(Long chamadoId);
 }

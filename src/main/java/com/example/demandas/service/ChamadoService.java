@@ -18,6 +18,7 @@ import java.util.stream.Collectors;
 public class ChamadoService {
 
     private static final Set<String> FINAIS = PoliticaStatus.FINAIS;
+    private static final String CANAL_PORTAL = "PORTAL";
 
     private final ChamadoRepository chamadoRepo;
     private final InteracaoRepository interacaoRepo;
@@ -94,10 +95,10 @@ public class ChamadoService {
         chamado.setDescricao(req.descricao().trim());
         chamadoRepo.save(chamado);
 
-        registrar(chamado, usuario, "ABERTURA", "Chamado aberto.");
+        registrar(chamado, usuario, "ABERTURA", "Chamado aberto.", CANAL_PORTAL);
         if (responsavel != null) {
             registrar(chamado, usuario, "ATRIBUICAO",
-                    "Atribuído automaticamente a " + responsavel.getNome() + " (" + origem + ").");
+                    "Atribuído automaticamente a " + responsavel.getNome() + " (" + origem + ").", CANAL_PORTAL);
             telegramNotificacoes.avisarAtribuicao(chamado, responsavel, false);
         }
         return paraResumo(chamado);
@@ -130,6 +131,11 @@ public class ChamadoService {
 
     @Transactional
     public void adicionarMensagem(String email, Long chamadoId, MensagemRequest req) {
+        adicionarMensagem(email, chamadoId, req, CANAL_PORTAL);
+    }
+
+    @Transactional
+    public void adicionarMensagem(String email, Long chamadoId, MensagemRequest req, String canal) {
         Usuario usuario = buscarUsuario(email);
         Chamado chamado = buscarChamado(chamadoId);
         exigirAcesso(usuario, chamado);
@@ -139,7 +145,7 @@ public class ChamadoService {
                     "Chamado " + chamado.getStatus().getNome().toLowerCase() + " não aceita novas mensagens.",
                     HttpStatus.CONFLICT);
         }
-        registrar(chamado, usuario, "MENSAGEM", req.mensagem().trim());
+        registrar(chamado, usuario, "MENSAGEM", req.mensagem().trim(), canal);
         telegramNotificacoes.avisarNovaMensagem(chamado, usuario);
     }
 
@@ -178,7 +184,7 @@ public class ChamadoService {
         String texto = anterior == null
                 ? "Chamado atribuído a " + docente.getNome() + "."
                 : "Chamado reatribuído de " + anterior.getNome() + " para " + docente.getNome() + ".";
-        registrar(chamado, admin, "ATRIBUICAO", texto);
+        registrar(chamado, admin, "ATRIBUICAO", texto, CANAL_PORTAL);
         telegramNotificacoes.avisarAtribuicao(chamado, docente, anterior != null);
         return paraResumo(chamado);
     }
@@ -196,6 +202,11 @@ public class ChamadoService {
 
     @Transactional
     public ChamadoResumo alterarStatus(String email, Long chamadoId, StatusRequest req) {
+        return alterarStatus(email, chamadoId, req, CANAL_PORTAL);
+    }
+
+    @Transactional
+    public ChamadoResumo alterarStatus(String email, Long chamadoId, StatusRequest req, String canal) {
         Usuario usuario = buscarUsuario(email);
         Chamado chamado = buscarChamado(chamadoId);
         exigirAcesso(usuario, chamado);
@@ -232,7 +243,7 @@ public class ChamadoService {
         if (req.mensagem() != null && !req.mensagem().isBlank()) {
             texto += " " + req.mensagem().trim();
         }
-        registrar(chamado, usuario, "MUDANCA_STATUS", texto);
+        registrar(chamado, usuario, "MUDANCA_STATUS", texto, canal);
         return paraResumo(chamado);
     }
 
@@ -292,11 +303,12 @@ public class ChamadoService {
         }
     }
 
-    private void registrar(Chamado chamado, Usuario autor, String tipo, String mensagem) {
+    private void registrar(Chamado chamado, Usuario autor, String tipo, String mensagem, String canal) {
         Interacao i = new Interacao();
         i.setChamado(chamado);
         i.setUsuario(autor);
         i.setTipo(tipo);
+        i.setCanal(canal);
         i.setMensagem(mensagem);
         interacaoRepo.save(i);
     }

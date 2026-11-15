@@ -103,8 +103,8 @@ public class NotificacaoProcessador {
         }
     }
 
-    /** Botões da mensagem. Entram na Etapa 7. */
+    /** Botões da mensagem: ver detalhes, responder e mudar status. */
     private Map<String, Object> teclado(Notificacao n) {
-        return null;
+        return TelegramTeclados.chamado(n.getChamado().getId());
     }
 }

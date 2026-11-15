@@ -866,7 +866,7 @@
 
         const historico = c.historico.map(i => `
           <li class="t-${esc(i.tipo)}">
-            <div class="tl-topo"><span class="tl-tipo">${esc(i.tipo.replaceAll('_',' '))}</span> · ${esc(i.autor)} · ${data(i.criadoEm)}</div>
+                        <div class="tl-topo"><span class="tl-tipo">${esc(i.tipo.replaceAll('_',' '))}</span> · ${esc(i.autor)} · ${data(i.criadoEm)}${i.canal === 'TELEGRAM' ? ' · ✈️ Telegram' : ''}</div>
             <div class="tl-msg">${esc(i.mensagem || '')}</div>
           </li>`).join('');
 

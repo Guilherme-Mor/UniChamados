@@ -4,7 +4,9 @@ import com.example.demandas.entity.Chamado;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 public interface ChamadoRepository extends JpaRepository<Chamado, Long> {
     List<Chamado> findByUsuarioIdOrderByCriadoEmDesc(Integer usuarioId);
@@ -12,6 +14,14 @@ public interface ChamadoRepository extends JpaRepository<Chamado, Long> {
     List<Chamado> findAllByOrderByCriadoEmDesc();
 
     boolean existsByDisciplinaId(Integer disciplinaId);
+
+    Optional<Chamado> findByProtocolo(String protocolo);
+
+    // Chamados do docente que ainda não foram encerrados nem cancelados (Telegram)
+    List<Chamado> findTop5ByResponsavelIdAndStatusNomeNotInOrderByCriadoEmDesc(Integer responsavelId,
+                                                                               Collection<String> status);
+
+    long countByResponsavelIdAndStatusNomeNotIn(Integer responsavelId, Collection<String> status);
 
     @Query("select c.status.nome, count(c) from Chamado c group by c.status.nome")
     List<Object[]> contarPorStatus();
